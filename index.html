@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Delta PLC Mobile Assistant</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Блок инженерного ввода параметров -->
+    <div class="input-panel">
+        <h3 class="panel-section-title">⚙️ Параметры Наладки</h3>
+        
+        <div class="form-group">
+            <label for="lineSelect">Технологическая линия:</label>
+            <select id="lineSelect" onchange="runUniversalCalculation()">
+                <option value="LINE_1_1">Линия 1.1</option>
+                <option value="LINE_1_2">Линия 1.2</option>
+                <option value="LINE_1_3">Линия 1.3</option>
+                <option value="LINE_1_4" selected>Линия 1.4</option>
+                <option value="LINE_1_5">Линия 1.5</option>
+                <option value="LINE_1_6">Линия 1.6</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="bottleHeightInput">Высота флакона по рулетке (мм):</label>
+            <input type="number" id="bottleHeightInput" value="210" min="50" max="500" step="5" oninput="runUniversalCalculation()">
+        </div>
+
+        <div class="form-group-row">
+            <div class="form-group-half">
+                <label for="volumeInput">Объем тары (мл):</label>
+                <input type="number" id="volumeInput" value="500" min="100" max="6000" step="50" oninput="runUniversalCalculation()">
+            </div>
+            <div class="form-group-half">
+                <label for="viscosityInput">Вязкость (ед.):</label>
+                <input type="number" id="viscosityInput" value="0" min="0" max="10000" step="50" oninput="runUniversalCalculation()">
+            </div>
+        </div>
+        <div class="viscosity-hints">
+            <span>💧 0 ед. — Аспирин / Вода | 🍯 1450-1850 ед. — Мыло Milana</span>
+        </div>
+
+        <!-- Большая яркая зеленая плашка-рекомендация -->
+        <div class="engineer-disclaimer">
+            ⚠️ ВНИМАНИЕ:<br>
+            Данные настройки являются <span>РЕКОМЕНДАЦИЕЙ</span>, а не принуждением! Финальная корректировка уставок остается за наладчиком линии розлива.
+        </div>
+    </div>
+
+    <!-- Виртуальная панель Delta -->
+    <div class="delta-panel">
+        <!-- Блок динамического уведомления о верхнем наливе -->
+        <div id="viscosityNotice" class="critical-alert" style="display: none; margin-bottom: 10px; background-color: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fef08a; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 500; text-align: center;">
+            💡 РЕКОМЕНДАЦИЯ ПЛК: Вязкость продукта превышает 1000 ед. Допускается использование режима ВЕРХНЕГО НАЛИВА для снижения износа привода траверсы.
+        </div>
+
+        <div class="delta-bezel">
+            <div class="delta-header">
+                <div class="delta-logo">◤ DELTA</div>
+                <div class="arsanmak-logo">ARSANMAK</div>
+                <div class="delta-icons">
+                    <span class="icon-btn">⚙️</span>
+                    <span class="icon-btn btn-auto">AUTO</span>
+                </div>
+            </div>
+
+            <!-- Контейнер для прокрутки экрана Delta -->
+            <div class="delta-screen-wrapper">
+                <div class="delta-screen">
+                    
+                    <!-- Левый блок: Траверса сопел -->
+                    <div class="screen-left">
+                        <div class="nozzle-graphic-box">
+                            <div class="nozzle-icon">💧</div>
+                            <div class="nozzle-label">НАЗАД</div>
+                        </div>
+
+                        <div class="plc-row"><span class="plc-label">3.Скорость под.</span><div class="plc-val-box" id="val_lift_speed_3">0</div></div>
+                        <div class="plc-row"><span class="plc-label">3.Полож. сопел</span><div class="plc-val-box" id="val_nozzle_pos_3">0</div></div>
+                        <div class="plc-row"><span class="plc-label">2.Скорость под.</span><div class="plc-val-box" id="val_lift_speed_2">0</div></div>
+                        <div class="plc-row"><span class="plc-label">2.Полож. сопел</span><div class="plc-val-box" id="val_nozzle_pos_2">0</div></div>
+                        <div class="plc-row"><span class="plc-label">1.Скорость под.</span><div class="plc-val-box" id="val_lift_speed_1">0</div></div>
+                        <div class="plc-row"><span class="plc-label">1.Полож. сопел</span><div class="plc-val-box" id="val_nozzle_pos_1">0</div></div>
+                        
+                        <div class="plc-footer-btns">
+                            <div class="plc-btn btn-orange">ОТПРАВКА</div>
+                        </div>
+                    </div>
+
+                    <!-- Правый блок: Скорости насоса, тайминги -->
+                    <div class="screen-right">
+                        <div class="plc-row-right"><span class="plc-label-r">3.СКОРОСТЬ НАСОСА</span><div class="plc-val-box-r" id="val_pump_speed_3">0.00</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">3.ОБЪЕМ ПЕРЕХОДА</span><div class="plc-val-box-r" id="val_trans_volume_3">0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">2.СКОРОСТЬ НАСОСА</span><div class="plc-val-box-r" id="val_pump_speed_2">0.00</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">2.ОБЪЕМ ПЕРЕХОДА</span><div class="plc-val-box-r" id="val_trans_volume_2">0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">1.СКОРОСТЬ НАСОСА</span><div class="plc-val-box-r" id="val_pump_speed_1">0.00</div></div>
+                        
+                        <div class="plc-divider"></div>
+
+                        <div class="plc-row-right"><span class="plc-label-r">ВЕРХ. ПОЛОЖ. СОПЛА</span><div class="plc-val-box-r" id="val_wait_point">0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">ВЕРХНИЙ НАЛИВ</span><div class="plc-val-box-r" id="val_top_pour">0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">НИЖН. ПОЛОЖ. СОПЛА</span><div class="plc-val-box-r" id="val_bottom_pos">0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">ОБЩИЙ ВЕС (мл.)</span><div class="plc-val-box-r" id="val_total_weight">0</div></div>
+
+                        <div class="plc-divider"></div>
+
+                        <div class="plc-row-right"><span class="plc-label-r">ЗАКР. ШИБЕРА ВХОД</span><div class="plc-val-box-r" id="val_shiber_close_in">0.0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">ОТКР. ШИБЕРА ВХОД</span><div class="plc-val-box-r" id="val_shiber_open_in">0.0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">ЗАКР. ШИБЕРА ВЫХОД</span><div class="plc-val-box-r" id="val_shiber_close_out">0.0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">СКОР. ОПУСК. ТРАВ.</span><div class="plc-val-box-r" id="val_traverse_down_speed">0</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">ОСН. СКОР. КОНВ.</span><div class="plc-val-box-r" id="val_conveyor_main_speed">0.00</div></div>
+                        <div class="plc-row-right"><span class="plc-label-r">НИЗК. СКОР. КОНВ.</span><div class="plc-val-box-r" id="val_conveyor_low_speed">0.00</div></div>
+
+                        <div class="plc-recipe-footer">
+                            <div class="recipe-nav"><span class="nav-arrow">▲</span><span class="nav-num" id="val_line_num">1</span><span class="nav-arrow">▼</span></div>
+                            <div class="product-name-val" id="val_product_label">MILANA750</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Внутренний экран системных настроек и задержек погружения -->
+            <div class="delta-settings-sub-screen">
+                <div class="settings-sub-title">⚙️ Настройки ПЛК (Экран задержек):</div>
+                <div class="settings-sub-row">
+                    <span>БЛОКИРОВКА КОНВЕЙЕРА:</span>
+                    <span class="status-badge" id="sub_conveyor_stop_badge">ЗАПУСТИТЬ</span>
+                </div>
+                <div class="settings-sub-row highlight-row">
+                    <span>ЗАДЕРЖКА ПОДЪЁМА (ПОГРУЖЕНИЕ):</span>
+                    <span class="sub-val text-cyan" id="sub_nozzle_lift_delay">0.0 сек</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

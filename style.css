@@ -1,0 +1,204 @@
+:root {
+    --bg-color: #080b11;
+    --card-bg: #111827;
+    --primary: #38bdf8;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #6b7280;
+    --border: #1f2937;
+}
+
+body {
+    margin: 0;
+    padding: 10px;
+    background-color: var(--bg-color);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 100%;
+}
+
+.input-panel {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.panel-section-title {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: var(--primary);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+}
+
+.form-group { margin-bottom: 12px; }
+.form-group-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.form-group-half { flex: 1; }
+
+label {
+    display: block;
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+select, input {
+    width: 100%;
+    padding: 12px;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: #f3f4f6;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+select:focus, input:focus { outline: none; border-color: var(--primary); }
+.viscosity-hints { font-size: 11px; color: var(--text-muted); text-align: center; }
+
+.engineer-disclaimer {
+    margin-top: 15px;
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--success);
+    border-radius: 6px;
+    padding: 12px;
+    color: #a7f3d0;
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: center;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.engineer-disclaimer span {
+    color: #4ade80;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+    letter-spacing: 0.5px;
+}
+
+.delta-panel { width: 100%; }
+.delta-bezel {
+    background-color: #2b2d31;
+    border: 2px solid #1e1f22;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.delta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1a1b1e;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.delta-logo { color: #f3f4f6; font-weight: 900; font-size: 13px; font-style: italic; }
+.arsanmak-logo { color: var(--danger); font-weight: bold; font-size: 12px; }
+.delta-icons { display: flex; gap: 6px; }
+.icon-btn { background-color: #3b3d42; padding: 2px 6px; font-size: 10px; border-radius: 3px; color: #e5e7eb; }
+.btn-auto { background-color: #065f46; color: #34d399; }
+
+.delta-screen-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    background-color: #0d1e3d;
+}
+
+.delta-screen {
+    position: relative;
+    background: linear-gradient(135deg, rgba(20, 44, 82, 0.75) 0%, rgba(8, 20, 43, 0.8) 100%);
+    border: 2px solid #000;
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    min-width: 500px;
+    z-index: 1;
+}
+
+.delta-screen::before {
+    content: "GRASS UNIVERSITY";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-12deg);
+    font-size: 38px;
+    font-weight: 900;
+    color: rgba(74, 222, 128, 0.15);
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.4), 0 0 25px rgba(22, 163, 74, 0.25);
+    letter-spacing: 2px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.screen-left { width: 38%; display: flex; flex-direction: column; position: relative; z-index: 2; }
+.screen-right { width: 62%; display: flex; flex-direction: column; position: relative; z-index: 2; }
+
+.nozzle-graphic-box { 
+    background-color: rgba(0, 0, 0, 0.35) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; 
+    padding: 4px; text-align: center; margin-bottom: 8px; 
+}
+
+.nozzle-icon { font-size: 18px; }
+.nozzle-label { font-size: 10px; color: #93c5fd; }
+.plc-row, .plc-row-right { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.plc-label, .plc-label-r { font-size: 11px; color: #e2e8f0; white-space: nowrap; }
+
+.plc-val-box { background-color: #000; border: 1px solid #475569; color: #67e8f9; font-family: monospace; font-size: 13px; font-weight: bold; width: 45px; padding: 2px; text-align: right; }
+.plc-val-box-r { background-color: #000; border: 1px solid #475569; color: #67e8f9; font-family: monospace; font-size: 13px; font-weight: bold; width: 65px; padding: 2px; text-align: right; }
+.plc-divider { height: 1px; background-color: rgba(255,255,255,0.15); margin: 4px 0; }
+.plc-footer-btns { margin-top: auto; }
+.plc-btn { font-size: 10px; font-weight: bold; text-align: center; padding: 8px; border-radius: 3px; color: #000; }
+.btn-orange { background: linear-gradient(to bottom, #fba94b 0%, #d97706 100%); }
+
+.plc-recipe-footer { 
+    background-color: rgba(0, 0, 0, 0.35) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; 
+    padding: 4px; display: flex; align-items: center; font-size: 11px; margin-top: 6px;
+}
+
+.recipe-nav { display: flex; align-items: center; background-color: #1e3a8a; padding: 1px 4px; gap: 4px; }
+.nav-arrow { font-size: 8px; color: #60a5fa;}
+.nav-num { font-weight: bold; color: #fff; font-family: monospace;}
+.product-name-val { margin-left: auto; background-color: #fffb14; color: #000; font-weight: bold; padding: 2px 6px; font-family: monospace; }
+
+.delta-settings-sub-screen { margin-top: 8px; background-color: var(--card-bg); border: 1px solid #374151; border-radius: 4px; padding: 10px; font-size: 12px; }
+.settings-sub-title { color: #9ca3af; font-weight: bold; margin-bottom: 6px; font-size: 11px; }
+.settings-sub-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+.status-badge { padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 10px; }
+.badge-top-active { background-color: #991b1b; color: #fca5a5; }
+.badge-stop-disabled { background-color: #16a34a; color: #bbf7d0; }
+.sub-val { font-family: monospace; font-weight: bold; background-color: #000; padding: 1px 4px; }
+.text-cyan { color: #22d3ee; }
+.highlight-row { background-color: rgba(34, 211, 238, 0.05); }
+
+@media (min-width: 768px) {
+    .app-container { flex-direction: row; }
+    .input-panel { width: 340px; }
+    .form-group-row { flex-direction: column; gap: 0; }
+    .delta-bezel { padding: 12px; }
+    .delta-screen { padding: 12px; gap: 15px; min-width: auto; }
+    .delta-screen::before { font-size: 52px; }
+    .plc-label { font-size: 12px; }
+    .plc-label-r { font-size: 11.5px; }
+    .plc-val-box { width: 55px; }
+    .plc-val-box-r { width: 80px; }
+}
