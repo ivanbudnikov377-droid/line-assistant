@@ -20,7 +20,6 @@ function runUniversalCalculation() {
     const vF = Math.min(visc / 8000, 1.0); 
     const currentTransitionPercent = 0.30 - (0.15 * vF); 
 
-    // Уставка ВЕРХНЕГО НАЛИВА на экране ПЛК всегда на 10 мм ниже физической высоты по рулетке
     tp = Math.round(bottleHeight - 10); 
 
     // =========================================================================
@@ -37,7 +36,7 @@ function runUniversalCalculation() {
             const fA = vF / 0.3;
             speed1 = 35 - 23 * fA;  speed2 = 65 - 35 * fA;  speed3 = 40 - 25 * fA;
             ls1 = Math.round(16 + 14 * (1.0 - fA)); ls2 = Math.round(16 + 24 * (1.0 - fA)); ls3 = Math.round(16 + 24 * (1.0 - fA)); 
-            delay = parseFloat((1.3 - 0.5 * fA).toFixed(1));
+            delay = parseFloat((1.3 * (1.0 - fA)).toFixed(1));
             stopConv = true; conv_l = 0.00;
             prodLabel = "DETAIL 500";
         } else {
@@ -72,7 +71,7 @@ function runUniversalCalculation() {
         prodLabel = visc === 0 ? "1L LIQ" : "1L GEL";
     } 
     // =========================================================================
-    // КРУПНАЯ ЛИНИЯ 1.4 (Паспортный режим для канистр 5л)
+    // КРУПНАЯ ЛИНИЯ 1.4 (Паспортные уставки до форсирования)
     // =========================================================================
     else if (line === "LINE_1_4") {
         lineNum = "1.4";
@@ -85,51 +84,59 @@ function runUniversalCalculation() {
         
         sh_in_c = parseFloat((1.0 * (1.0 - vF)).toFixed(1)); sh_in_o = parseFloat((0.7 + 0.3 * vF).toFixed(1));
         conv_m = parseFloat((55 + 25 * vF).toFixed(2)); conv_l = conv_m; stopConv = false;
+        
+        // Базовая задержка крупной тары
         delay = parseFloat(((4.5 * (vol / 5000)) * (1.0 - vF)).toFixed(1));
-        if (delay < 0) delay = 0.0;
         prodLabel = Math.round(visc) === 0 ? "5L LAUN" : "5L GEL";
     }
 
-    // ВНЕДРЕНО: Поправка на разгон крупных объемов > 1.5л (1500 мл) при вязкости > 100 ед.
+    // Сохраняем чистые расчетные значения скоростей до применения коэффициентов гашения
+    const baseUnboostedSpeed1 = speed1;
+
+    // Поправка на СИНХРОННЫЙ разгон крупных объемов > 1.5л при вязкости > 100 ед.
     if (vol > 1500 && visc > 100) {
-        // Рассчитываем пропорциональный шаг разгона. Вторая скорость стремится жестко к 70.00%
         const targetSpeed2 = 70.00;
-        const boosterRatio = targetSpeed2 / speed2; // Коэффициент пропорции разгона
+        const boosterRatio = targetSpeed2 / speed2; 
 
         speed2 = targetSpeed2;
         speed1 = speed1 * boosterRatio;
         speed3 = speed3 * boosterRatio;
+
+        ls1 = Math.round(ls1 * boosterRatio);
+        ls2 = Math.round(ls2 * boosterRatio);
+        ls3 = Math.round(ls3 * boosterRatio);
     } else {
-        // Если это мелкая тара или жидкий щелочной продукт — работают стандартные безопасные придушивания:
-        
-        // 1. Дополнительное урезание 1 и 3 скорости на 15% для жидких пенных сред (вязкость < 800 ед.)
+        // Защитные придушивания для мелкой тары и воды
         if (visc < 800) {
             const liquidDamping = 0.85 + (0.15 * (visc / 800));
             speed1 = speed1 * liquidDamping;
             speed3 = speed3 * liquidDamping;
         }
-
-        // 2. Если объем флакона до 1л включительно (<= 1000 мл), срезаем вторую скорость еще на 10%
         if (vol <= 1000) {
             speed2 = speed2 * 0.90;
         }
-
-        // 3. Общее придушивание всех 3 скоростей насоса на 8% для общей безопасности (Коэффициент 0.92)
         speed1 = speed1 * 0.92;
         speed2 = speed2 * 0.92;
         speed3 = speed3 * 0.92;
     }
 
-    // Обеспечение жестких верхних лимитов ПЛК (Частота насоса не может физически превысить 100%)
-    speed1 = Math.min(speed1, 100.00);
-    speed2 = Math.min(speed2, 100.00);
-    speed3 = Math.min(speed3, 100.00);
+    // ИСПРАВЛЕНО: Динамическая подстройка задержки на дне под реальную стартовую скорость насоса
+    // Если насос разогнался, уменьшаем время удержания сопел на дне (Защита от перелива и вспенивания)
+    if (line === "LINE_1_4" && vol > 1500 && visc > 100) {
+        const speedRatio = speed1 / baseUnboostedSpeed1; // Коэффициент разгона первой скорости
+        delay = parseFloat((delay / speedRatio).toFixed(1));
+    }
+    if (delay < 0) delay = 0.0;
 
-    // ОБЩЕЗАВОДСКОЕ ПРАВИЛО НАСОСА: Фазы переходов 20% и 85% от уставки ОБЩИЙ ВЕС (tw)
+    // Верхние лимиты частотников (макс 100%)
+    speed1 = Math.min(speed1, 100.00); speed2 = Math.min(speed2, 100.00); speed3 = Math.min(speed3, 100.00);
+    ls1 = Math.min(ls1, 100); ls2 = Math.min(ls2, 100); ls3 = Math.min(ls3, 100);
+
+    // Расчет фаз поршня (20% и 85% от Общего Веса)
     t2 = Math.round(tw * 0.20); 
     t3 = Math.round(tw * 0.85); 
 
-    // ОБЩЕЗАВОДСКОЕ ПРАВИЛО КИНЕМАТИКИ ТРАВЕРСЫ
+    // Расчет датчиков траверсы от конвейера
     np1 = bp;
     np2 = Math.round(bp + (tp * 0.20));
     np3 = Math.round(bp + (tp * 0.85));
