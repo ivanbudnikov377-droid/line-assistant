@@ -4,145 +4,130 @@ function runUniversalCalculation() {
     const rawVol = document.getElementById('volumeInput').value;
     const rawVisc = document.getElementById('viscosityInput').value;
 
-    // Страховочные значения при первой загрузке страницы, чтобы не выбивало ошибку NaN
-    const bottleHeight = rawHeight ? parseFloat(rawHeight) : 210;
-    const vol = rawVol ? parseFloat(rawVol) : 500;
+    // Перевод в числа строго на старте функции
+    const bottleHeight = rawHeight ? parseFloat(rawHeight) : 245;
+    const vol = rawVol ? parseFloat(rawVol) : 600;
     const visc = rawVisc ? parseFloat(rawVisc) : 0;
     
     if (bottleHeight <= 0 || vol <= 0 || visc < 0) return;
 
-    // Инженерные уставки экрана Delta по умолчанию
-    let speed1 = 25, speed2 = 50, speed3 = 35, t2 = 60, t3 = 500, wp = 320, tp = 210, bp = 40, tw = 470;
-    let sh_in_c = 0.0, sh_in_o = 0.5, sh_out_c = 0.0, tr_down = 100, conv_m = 60, conv_l = 2.6;
-    let ls1 = 30, ls2 = 40, ls3 = 40, np1 = 40, np2 = 110, np3 = 165;
-    let delay = 0.0, stopConv = false, lineNum = "1.4", prodLabel = "MILANA750";
+    // 1. Определение номера линии
+    let lineNum = "1.1";
+    if (line === "LINE_1_2") lineNum = "1.2";
+    if (line === "LINE_1_3") lineNum = "1.3";
+    if (line === "LINE_1_4") lineNum = "1.4";
+    if (line === "LINE_1_5") lineNum = "1.5";
+    if (line === "LINE_1_6") lineNum = "1.6";
 
-    const vF = Math.min(visc / 8000, 1.0); 
+    // 2. Учет ФИЗИЧЕСКОГО СЕЧЕНИЯ СОПЕЛ
+    const isWideNozzle = (line === "LINE_1_4" || line === "LINE_1_6");
+    const nozzleAreaFactor = isWideNozzle ? 1.0 : 1.89; 
+
+    // 3. Базовые константы механики ПЛК (Физический ноль и зазоры оборудования)
+    const bp = 40; 
+    let tp = Math.round(bottleHeight - 10);   
+    let wp = Math.round(bottleHeight + 100);    
+
+    // 4. Нормализация коэффициента вязкости по шкале от 0 до 8000 ед.
+    const vF = Math.min(visc / 8000, 1.0);
     const currentTransitionPercent = 0.30 - (0.15 * vF); 
 
-    tp = Math.round(bottleHeight - 10); 
+    // 5. Математический расчет скоростей насоса
+    let speed1 = 40 + 5 * vF;
+    let speed2 = 70 + 5 * vF;
+    let speed3 = 40 + 5 * vF;
 
-    // =========================================================================
-    // КЛАСТЕР МЕЛКИХ ЛИНИЙ (1.1, 1.3, 1.5)
-    // =========================================================================
-    if (line === "LINE_1_1" || line === "LINE_1_3" || line === "LINE_1_5") {
-        if (line === "LINE_1_1") lineNum = "1.1";
-        if (line === "LINE_1_3") lineNum = "1.3";
-        if (line === "LINE_1_5") lineNum = "1.5";
-        
-        bp = 40; wp = Math.round(bottleHeight + 100);
-
-        if (vF <= 0.3) { 
-            const fA = vF / 0.3;
-            speed1 = 35 - 23 * fA;  speed2 = 65 - 35 * fA;  speed3 = 40 - 25 * fA;
-            ls1 = Math.round(16 + 14 * (1.0 - fA)); ls2 = Math.round(16 + 24 * (1.0 - fA)); ls3 = Math.round(16 + 24 * (1.0 - fA)); 
-            delay = parseFloat((1.3 * (1.0 - fA)).toFixed(1));
-            stopConv = true; conv_l = 0.00;
-            prodLabel = "DETAIL 500";
-        } else {
-            const fB = (vF - 0.3) / 0.7;
-            speed1 = 12 + 48 * fB;  speed2 = 30 + 45 * fB;  speed3 = 15 + 35 * fB;
-            ls1 = Math.round(30 + 40 * fB); ls2 = Math.round(40 + 30 * fB); ls3 = Math.round(40 + 25 * fB); 
-            delay = parseFloat((0.8 * (1.0 - fB)).toFixed(1));
-            stopConv = fB < 0.5; conv_l = stopConv ? 0.00 : parseFloat((2.60 * fB).toFixed(2));
-            prodLabel = "MILANA750";
-        }
-
-        tw = Math.round(vol * (0.94 - 0.04 * vF)); 
-        sh_in_o = 0.5; conv_m = 60.00;
-    } 
-    // =========================================================================
-    // КЛАСТЕР СРЕДНИХ УНИВЕРСАЛЬНЫХ ЛИНИЙ (1.2, 1.6)
-    // =========================================================================
-    else if (line === "LINE_1_2" || line === "LINE_1_6") {
-        if (line === "LINE_1_2") lineNum = "1.2";
-        if (line === "LINE_1_6") lineNum = "1.6";
-        
-        speed1 = 45 + 5 * vF; speed2 = 65 + 10 * vF; speed3 = 22 + 3 * vF;
-        bp = 40; wp = Math.round(bottleHeight + 90); 
-        tw = Math.round(vol * (0.94 - 0.04 * vF)); 
-        
-        ls1 = Math.round(25 - 5 * vF); ls2 = 35; ls3 = Math.round(30 - 8 * vF);
-        np1 = bp; np2 = Math.round(bp + (tp - bp) * 0.30); np3 = Math.round(bp + (tp - bp) * 0.80); 
-        
-        sh_in_o = parseFloat((0.5 * vF).toFixed(1));
-        conv_m = 80.00; conv_l = Math.round(15 * (1.0 - vF)); stopConv = true;
-        delay = parseFloat((0.5 * (1.0 - vF)).toFixed(1));
-        prodLabel = visc === 0 ? "1L LIQ" : "1L GEL";
-    } 
-    // =========================================================================
-    // КРУПНАЯ ЛИНИЯ 1.4 (Паспортные уставки до форсирования)
-    // =========================================================================
-    else if (line === "LINE_1_4") {
-        lineNum = "1.4";
-        speed1 = 25 + 35 * vF; speed2 = 40 + 30 * vF; speed3 = 20 + 25 * vF;
-        bp = 50; wp = Math.round(bottleHeight + 130); 
-        tw = Math.round(vol * (0.94 - 0.04 * vF)); 
-
-        ls1 = Math.round(20 + 5 * vF); ls2 = Math.round(25 + 10 * vF); ls3 = 20;
-        np1 = bp; np2 = Math.round(bp + (tp - bp) * 0.30); np3 = Math.round(bp + (tp - bp) * 0.80); 
-        
-        sh_in_c = parseFloat((1.0 * (1.0 - vF)).toFixed(1)); sh_in_o = parseFloat((0.7 + 0.3 * vF).toFixed(1));
-        conv_m = parseFloat((55 + 25 * vF).toFixed(2)); conv_l = conv_m; stopConv = false;
-        
-        // Базовая задержка крупной тары
-        delay = parseFloat(((4.5 * (vol / 5000)) * (1.0 - vF)).toFixed(1));
-        prodLabel = Math.round(visc) === 0 ? "5L LAUN" : "5L GEL";
+    // Специфическая корректировка для мелкого кластера линий на ультра-вязком геле (свыше 3000 ед)
+    if (!isWideNozzle && visc > 3000) {
+        speed1 = 20 + 25 * vF; speed2 = 45 + 25 * vF; speed3 = 20 + 25 * vF;
     }
 
-    // Сохраняем чистые расчетные значения скоростей до применения коэффициентов гашения
-    const baseUnboostedSpeed1 = speed1;
-
-    // Поправка на СИНХРОННЫЙ разгон крупных объемов > 1.5л при вязкости > 100 ед.
-    if (vol > 1500 && visc > 100) {
-        const targetSpeed2 = 70.00;
-        const boosterRatio = targetSpeed2 / speed2; 
-
-        speed2 = targetSpeed2;
-        speed1 = speed1 * boosterRatio;
-        speed3 = speed3 * boosterRatio;
-
-        ls1 = Math.round(ls1 * boosterRatio);
-        ls2 = Math.round(ls2 * boosterRatio);
-        ls3 = Math.round(ls3 * boosterRatio);
-    } else {
-        // Защитные придушивания для мелкой тары и воды
-        if (visc < 800) {
-            const liquidDamping = 0.85 + (0.15 * (visc / 800));
-            speed1 = speed1 * liquidDamping;
-            speed3 = speed3 * liquidDamping;
-        }
-        if (vol <= 1000) {
-            speed2 = speed2 * 0.90;
-        }
-        speed1 = speed1 * 0.92;
-        speed2 = speed2 * 0.92;
-        speed3 = speed3 * 0.92;
+    // Дополнительное удушение 1 и 3 скоростей для очень жидких сред (вязкость < 800 ед.)
+    if (visc < 800) {
+        const liquidDamping = 0.85 + (0.15 * (visc / 800));
+        speed1 = speed1 * liquidDamping; speed3 = speed3 * liquidDamping;
     }
 
-    // ИСПРАВЛЕНО: Динамическая подстройка задержки на дне под реальную стартовую скорость насоса
-    // Если насос разогнался, уменьшаем время удержания сопел на дне (Защита от перелива и вспенивания)
-    if (line === "LINE_1_4" && vol > 1500 && visc > 100) {
-        const speedRatio = speed1 / baseUnboostedSpeed1; // Коэффициент разгона первой скорости
-        delay = parseFloat((delay / speedRatio).toFixed(1));
-    }
-    if (delay < 0) delay = 0.0;
+    // Если это Азелит или малый объем жидкого продукта (до 1л), применяем уставки 25/50/25 и фазы мастера
+    let k_t2 = 0.20, k_t3 = 0.85;
+    let isSmallLiquidFormat = (vol <= 1000 && visc < 500 && !isWideNozzle);
 
-    // Верхние лимиты частотников (макс 100%)
+    if (isSmallLiquidFormat) {
+        speed1 = 25.00; speed2 = 50.00; speed3 = 25.00;
+        k_t2 = 0.15; k_t3 = 0.95; 
+    } else if (vol <= 1000) {
+        speed2 = speed2 * 0.90;
+        speed1 = speed1 * 0.92; speed2 = speed2 * 0.92; speed3 = speed3 * 0.92;
+    }
+
+    // Ограничение верхнего предела частотников насоса ПЛК (макс 100.00%)
     speed1 = Math.min(speed1, 100.00); speed2 = Math.min(speed2, 100.00); speed3 = Math.min(speed3, 100.00);
+
+    // 6. МАТЕМАТИЧЕСКИЙ РАСЧЕТ ВЕСОВОГО КОНТРОЛЯ И ФАЗ ПОРШНЯ
+    const baseDensity = (vol > 1500) ? 0.98 : (isSmallLiquidFormat ? 0.895 : 0.94);
+    const densityFactor = baseDensity - (0.04 * vF);
+    const tw = Math.round(vol * densityFactor);
+
+    t2 = Math.round(tw * k_t2); 
+    t3 = Math.round(tw * k_t3); 
+
+    // 7. ЧИСТЫЙ ГИДРАВЛИЧЕСКИЙ РАСЧЕТ СКОРОСТИ ТРАВЕРСЫ (ls1, ls2, ls3)
+    const baseMultiplier = (vol > 1500) ? 51.5 : 43.5;
+    const kinematicsFactor = (speed2 / bottleHeight) * baseMultiplier * nozzleAreaFactor; 
+    
+    let baseLiftSpeed = Math.round(kinematicsFactor * (1.0 + 0.35 * vF));
+    baseLiftSpeed = Math.max(baseLiftSpeed, 10); 
+
+    // Полное жесткое принуждение операторского скоростного эталона для малой жидкой тары
+    if (isSmallLiquidFormat) {
+        ls1 = 70; 
+        ls2 = 75; 
+        ls3 = 65;
+        wp = 297; 
+        tp = 215; 
+    } else {
+        ls2 = baseLiftSpeed;                                 
+        ls1 = Math.max(Math.round(ls2 * 0.9), 10); 
+        ls3 = Math.max(Math.round(ls2 * 0.85), 10); 
+    }
+
     ls1 = Math.min(ls1, 100); ls2 = Math.min(ls2, 100); ls3 = Math.min(ls3, 100);
 
-    // Расчет фаз поршня (20% и 85% от Общего Веса)
-    t2 = Math.round(tw * 0.20); 
-    t3 = Math.round(tw * 0.85); 
-
-    // Расчет датчиков траверсы от конвейера
+    // 8. РАСЧЕТ ДАТЧИКОВ ПОЗИЦИОНИРОВАНИЯ СОПЕЛ
     np1 = bp;
-    np2 = Math.round(bp + (tp * 0.20));
-    np3 = Math.round(bp + (tp * 0.85));
+    if (isSmallLiquidFormat) {
+        np2 = tp; np3 = tp; 
+    } else {
+        np2 = Math.round(bp + (tp * 0.20)); 
+        np3 = Math.round(bp + (tp * 0.85)); 
+        if (np3 >= tp) { np3 = Math.round(tp - 5); }
+    }
 
-    if (np3 >= tp) {
-        np3 = Math.round(tp - 5);
+    // 9. ИСПРАВЛЕНО: МАТЕМАТИЧЕСКИЙ РАСЧЕТ ЗАДЕРЖКИ ПОГРУЖЕНИЯ НА ДНЕ (delay)
+    let delay = 0.0;
+    if (isSmallLiquidFormat) {
+        // Урезано с 2.0 до безопасных 1.2 сек под механический предел bp = 40 мм
+        delay = 1.2; 
+    } else {
+        let calculatedDelay = (vol / 5000) * (80 / speed1) * (1.0 - vF);
+        delay = parseFloat(Math.max(calculatedDelay, 0.0).toFixed(1));
+    }
+
+    // Тайминги шиберов и конвейера
+    const sh_in_c = (vol > 1500) ? 0.5 : 0.0;
+    const sh_in_o = (vol > 1500) ? 0.0 : 0.5;
+    const sh_out_c = (vol > 1500) ? 0.0 : 0.2;
+    const conv_m = (vol > 1500) ? 70.00 : 60.00;
+    const conv_l = (vol > 1500) ? 15.00 : 0.00;
+    const tr_down = 100;
+    const stopConv = (vol <= 1000);
+
+    let prodLabel = "DETAIL 500";
+    if (vol > 1500) {
+        prodLabel = (visc <= 200) ? "ASPERIN 4K" : "5L GEL";
+        if (visc > 100 && visc < 1000) prodLabel = "EVA 5L";
+    } else {
+        prodLabel = isSmallLiquidFormat ? "AZELIT0,6" : "DETAIL 500";
     }
 
     // Вывод рассчитанных параметров в ячейки экрана Delta
