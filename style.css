@@ -190,6 +190,12 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
 .text-cyan { color: #22d3ee; }
 .highlight-row { background-color: rgba(34, 211, 238, 0.05); }
 
+/* === ДОБАВЛЕННОЕ ПРАВИЛО === */
+/* Системное правило скрытия элементов для логики вкладок */
+.hidden {
+    display: none !important;
+}
+
 @media (min-width: 768px) {
     .app-container { flex-direction: row; }
     .input-panel { width: 340px; }
