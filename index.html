@@ -8,7 +8,19 @@
 </head>
 <body>
 
-<div class="app-container">
+<!-- === НАЧАЛО БЛОКА: КНОПКИ НАВИГАЦИИ === -->
+<div class="max-w-md mx-auto bg-zinc-950 px-4 pt-4 flex gap-2">
+    <button id="btn-tab-filling" onclick="switchTab('filling')" class="flex-1 bg-amber-600 text-black font-black py-2 rounded text-xs uppercase tracking-wider transition cursor-pointer">
+        💧 Налив
+    </button>
+    <button id="btn-tab-labeling" onclick="switchTab('labeling')" class="flex-1 bg-zinc-900 text-zinc-400 font-bold py-2 rounded text-xs uppercase tracking-wider transition border border-zinc-800 cursor-pointer">
+        🏷 Этикетка
+    </button>
+</div>
+<!-- === КОНЕЦ БЛОКА: КНОПКИ НАВИГАЦИИ === -->
+
+<!-- ОСНОВНОЙ КОНТЕЙНЕР С ID ДЛЯ ВКЛАДКИ НАЛИВ -->
+<div id="content-filling" class="app-container">
     <!-- Блок инженерного ввода параметров -->
     <div class="input-panel">
         <h3 class="panel-section-title">⚙️ Параметры Наладки</h3>
@@ -18,8 +30,8 @@
             <select id="lineSelect" onchange="runUniversalCalculation()">
                 <option value="LINE_1_1">Линия 1.1</option>
                 <option value="LINE_1_2">Линия 1.2</option>
-                <option value="LINE_1_3">Линия 1.3</option>
-                <option value="LINE_1_4" selected>Линия 1.4</option>
+                <option value="LINE_1_3" selected>Линия 1.3</option>
+                <option value="LINE_1_4">Линия 1.4</option>
                 <option value="LINE_1_5">Линия 1.5</option>
                 <option value="LINE_1_6">Линия 1.6</option>
             </select>
@@ -27,13 +39,13 @@
 
         <div class="form-group">
             <label for="bottleHeightInput">Высота флакона по рулетке (мм):</label>
-            <input type="number" id="bottleHeightInput" value="210" min="50" max="500" step="5" oninput="runUniversalCalculation()">
+            <input type="number" id="bottleHeightInput" value="245" min="50" max="500" step="5" oninput="runUniversalCalculation()">
         </div>
 
         <div class="form-group-row">
             <div class="form-group-half">
                 <label for="volumeInput">Объем тары (мл):</label>
-                <input type="number" id="volumeInput" value="500" min="100" max="6000" step="50" oninput="runUniversalCalculation()">
+                <input type="number" id="volumeInput" value="600" min="100" max="6000" step="50" oninput="runUniversalCalculation()">
             </div>
             <div class="form-group-half">
                 <label for="viscosityInput">Вязкость (ед.):</label>
@@ -138,6 +150,84 @@
         </div>
     </div>
 </div>
+<!-- КОНЕЦ КОНТЕЙНЕРА НАЛИВ -->
+
+<!-- === НАЧАЛО БЛОКА: ИНТЕРФЕЙС ЭТИКЕТКИ === -->
+<div id="content-labeling" class="max-w-md mx-auto bg-zinc-950 text-gray-100 p-4 font-sans select-none hidden" style="position: relative; overflow: hidden; border-radius: 8px;">
+    
+    <!-- Фоновая надпись как в наливе -->
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); font-size: 52px; font-weight: 900; color: rgba(74, 222, 128, 0.08); text-shadow: 0 0 20px rgba(74, 222, 128, 0.2), 0 0 50px rgba(22, 163, 74, 0.1); letter-spacing: 2px; white-space: nowrap; pointer-events: none; z-index: 0; user-select: none;">
+        GRASS UNIVERSITY
+    </div>
+    
+    <!-- Шапка модуля в стиле Delta (с z-index чтобы быть поверх фона) -->
+    <div class="border-b border-zinc-800 pb-3 mb-4 flex justify-between items-center" style="position: relative; z-index: 1;">
+        <div>
+            <h1 class="text-xl font-bold tracking-wider text-amber-500">🏷 ARSANMAK + HERMA</h1>
+            <p class="text-xs text-zinc-500">Калибровка и переналадка аппликатора</p>
+        </div>
+        <div class="bg-amber-600 text-black font-black text-xs px-2 py-1 rounded">⚙ HERMA</div>
+    </div>
+    
+    <!-- Форма ввода параметров этикетировщика (с z-index чтобы быть поверх фона) -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-4 shadow-xl" style="position: relative; z-index: 1;">
+        <h2 class="text-sm font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-800 pb-1">⚙ Параметры Наладки</h2>
+        
+        <!-- Поле выбора формы флакона -->
+        <div class="form-group-labeling">
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Форма флакона:</label>
+            <select id="bottle-type" onchange="toggleConeInput()" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-amber-400 focus:outline-none">
+                <option value="flat">Прямой плоский (на 2 этикетки)</option>
+                <option value="cone">Конусный (на 2 этикетки)</option>
+                <option value="belly">Пузатый сферический (на 2 этикетки)</option>
+                <option value="round">Круглый (круговая обкатка)</option>
+            </select>
+        </div>
+        
+        <!-- Поле выбора материала этикетки -->
+        <div class="form-group-labeling">
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Материал этикетки:</label>
+            <select id="label-material" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-amber-400 focus:outline-none">
+                <option value="pp">Полипропилен (ПП / Пленка)</option>
+                <option value="paper">Бумага (Жесткая основа)</option>
+            </select>
+        </div>
+        
+        <!-- Поле ввода скорости конвейера -->
+        <div class="form-group-labeling">
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Линейная скорость конвейера (м/мин):</label>
+            <input id="conveyor-speed" type="number" step="0.1" value="12.0" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-center font-mono text-green-400 focus:outline-none">
+        </div>
+        
+        <!-- Динамическое поле ввода угла конуса -->
+        <div id="cone-angle-block" class="form-group-labeling hidden">
+            <label class="block text-xs font-bold text-amber-400 mb-1">Угол стенки флакона по лазерному угломеру (град°):</label>
+            <input id="cone-angle" type="number" step="0.1" value="4.5" class="w-full bg-zinc-950 border border-amber-800 rounded p-2 text-sm text-center font-mono text-amber-400 focus:outline-none">
+        </div>
+        
+        <!-- Кнопка генерации техкарты -->
+        <button onclick="generateTechCard()" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-black py-3 rounded text-sm uppercase tracking-wider transition active:scale-95 cursor-pointer">
+            Сформировать Техкарту ПЛК
+        </button>
+    </div>
+
+    <!-- Результат генерации (с z-index чтобы быть поверх фона) -->
+    <div id="tech-card-result" class="hidden mt-4 bg-zinc-900 border-2 border-dashed border-zinc-800 rounded-lg p-4 space-y-4" style="position: relative; z-index: 1;">
+        <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+            <span class="text-xs font-mono text-zinc-600">ID_RECIPE: AUTO_GEN</span>
+            <span class="text-xs font-bold text-green-400">● РАСЧЕТ ВЫПОЛНЕН</span>
+        </div>
+        <div class="space-y-2">
+            <h3 class="text-xs font-black text-amber-500 uppercase tracking-wider">🔧 1. Механическая переналадка Arsanmak</h3>
+            <ul id="mech-instructions" class="text-xs text-zinc-400 space-y-1.5 list-disc pl-4 font-mono"></ul>
+        </div>
+        <div class="space-y-2 pt-2 border-t border-zinc-900">
+            <h3 class="text-xs font-black text-amber-500 uppercase tracking-wider">⚙ 2. Настройка параметров Herma</h3>
+            <ul id="herma-instructions" class="text-xs text-zinc-400 space-y-1.5 list-disc pl-4 font-mono"></ul>
+        </div>
+    </div>
+</div>
+<!-- === КОНЕЦ БЛОКА: ИНТЕРФЕЙС ЭТИКЕТКИ === -->
 
 <script src="script.js"></script>
 </body>
