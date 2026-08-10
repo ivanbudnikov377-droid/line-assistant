@@ -97,6 +97,7 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
 }
 
 .delta-panel { width: 100%; }
+
 .delta-bezel {
     background-color: #2b2d31;
     border: 2px solid #1e1f22;
@@ -164,33 +165,115 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
 
 .nozzle-icon { font-size: 18px; }
 .nozzle-label { font-size: 10px; color: #93c5fd; }
-.plc-row, .plc-row-right { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.plc-label, .plc-label-r { font-size: 11px; color: #e2e8f0; white-space: nowrap; }
 
-.plc-val-box { background-color: #000; border: 1px solid #475569; color: #67e8f9; font-family: monospace; font-size: 13px; font-weight: bold; width: 45px; padding: 2px; text-align: right; }
-.plc-val-box-r { background-color: #000; border: 1px solid #475569; color: #67e8f9; font-family: monospace; font-size: 13px; font-weight: bold; width: 65px; padding: 2px; text-align: right; }
+.plc-row, .plc-row-right { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 4px; 
+}
+
+.plc-label, .plc-label-r { 
+    font-size: 11px; 
+    color: #e2e8f0; 
+    white-space: nowrap; 
+}
+
+.plc-val-box { 
+    background-color: #000; 
+    border: 1px solid #475569; 
+    color: #67e8f9; 
+    font-family: monospace; 
+    font-size: 13px; 
+    font-weight: bold; 
+    width: 45px; 
+    padding: 2px; 
+    text-align: right; 
+}
+
+.plc-val-box-r { 
+    background-color: #000; 
+    border: 1px solid #475569; 
+    color: #67e8f9; 
+    font-family: monospace; 
+    font-size: 13px; 
+    font-weight: bold; 
+    width: 65px; 
+    padding: 2px; 
+    text-align: right; 
+}
+
 .plc-divider { height: 1px; background-color: rgba(255,255,255,0.15); margin: 4px 0; }
 .plc-footer-btns { margin-top: auto; }
-.plc-btn { font-size: 10px; font-weight: bold; text-align: center; padding: 8px; border-radius: 3px; color: #000; }
+
+.plc-btn { 
+    font-size: 10px; 
+    font-weight: bold; 
+    text-align: center; 
+    padding: 8px; 
+    border-radius: 3px; 
+    color: #000; 
+}
+
 .btn-orange { background: linear-gradient(to bottom, #fba94b 0%, #d97706 100%); }
 
 .plc-recipe-footer { 
     background-color: rgba(0, 0, 0, 0.35) !important; 
     border: 1px solid rgba(255, 255, 255, 0.1) !important; 
-    padding: 4px; display: flex; align-items: center; font-size: 11px; margin-top: 6px;
+    padding: 4px; 
+    display: flex; 
+    align-items: center; 
+    font-size: 11px; 
+    margin-top: 6px;
 }
 
-.recipe-nav { display: flex; align-items: center; background-color: #1e3a8a; padding: 1px 4px; gap: 4px; }
-.nav-arrow { font-size: 8px; color: #60a5fa;}
-.nav-num { font-weight: bold; color: #fff; font-family: monospace;}
-.product-name-val { margin-left: auto; background-color: #fffb14; color: #000; font-weight: bold; padding: 2px 6px; font-family: monospace; }
+.recipe-nav { 
+    display: flex; 
+    align-items: center; 
+    background-color: #1e3a8a; 
+    padding: 1px 4px; 
+    gap: 4px; 
+}
 
-.delta-settings-sub-screen { margin-top: 8px; background-color: var(--card-bg); border: 1px solid #374151; border-radius: 4px; padding: 10px; font-size: 12px; }
+.nav-arrow { font-size: 8px; color: #60a5fa; }
+.nav-num { font-weight: bold; color: #fff; font-family: monospace; }
+.product-name-val { 
+    margin-left: auto; 
+    background-color: #fffb14; 
+    color: #000; 
+    font-weight: bold; 
+    padding: 2px 6px; 
+    font-family: monospace; 
+}
+
+.delta-settings-sub-screen { 
+    margin-top: 8px; 
+    background-color: var(--card-bg); 
+    border: 1px solid #374151; 
+    border-radius: 4px; 
+    padding: 10px; 
+    font-size: 12px; 
+}
+
 .settings-sub-title { color: #9ca3af; font-weight: bold; margin-bottom: 6px; font-size: 11px; }
-.settings-sub-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
-.status-badge { padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 10px; }
+
+.settings-sub-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 4px 0; 
+}
+
+.status-badge { 
+    padding: 2px 6px; 
+    border-radius: 3px; 
+    font-weight: bold; 
+    font-size: 10px; 
+}
+
 .badge-top-active { background-color: #991b1b; color: #fca5a5; }
 .badge-stop-disabled { background-color: #16a34a; color: #bbf7d0; }
+
 .sub-val { font-family: monospace; font-weight: bold; background-color: #000; padding: 1px 4px; }
 .text-cyan { color: #22d3ee; }
 .highlight-row { background-color: rgba(34, 211, 238, 0.05); }
@@ -226,6 +309,7 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
 .text-green-400 { color: #4ade80; }
 .text-amber-400 { color: #fbbf24; }
 .text-amber-500 { color: #f59e0b; }
+.text-red-400 { color: #ef4444; }
 .text-zinc-500 { color: #71717a; }
 .text-zinc-600 { color: #52525b; }
 .font-black { font-weight: 900; }
