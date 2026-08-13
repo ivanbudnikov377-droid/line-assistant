@@ -261,6 +261,18 @@ function runUniversalCalculation() {
     if (noticeEl) {
         noticeEl.style.display = visc > 1000 ? 'block' : 'none';
     }
+
+    // === ПРОВЕРКА ЗАДЕРЖКИ ШИБЕРА (КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ) ===
+    const shiberWarning = document.getElementById('shiber-warning');
+    if (shiberWarning) {
+        // Показываем предупреждение если задержка открытия шибера < 0.4 
+        // И это линия 1.6 с объемом 5000 мл
+        if (sh_in_o < 0.4 && line === "LINE_1_6" && vol >= 4500 && vol <= 5500) {
+            shiberWarning.style.display = 'block';
+        } else {
+            shiberWarning.style.display = 'none';
+        }
+    }
 }
 
 // ============================================================
