@@ -52,6 +52,7 @@ function runUniversalCalculation() {
     let sh_in_c = 0, sh_in_o = 0, sh_out_c = 0;
     let conv_m = 60.00, conv_l = 0.00;
     let tr_down = 100;
+    let delay = 0.0;
 
     // === 7. РАСЧЕТ ДЛЯ МАЛОГО ФОРМАТА (≤ 1000 мл, вязкость < 500) ===
     if (isSmallLiquidFormat) {
@@ -76,37 +77,36 @@ function runUniversalCalculation() {
         sh_in_c = 0.0;
         sh_in_o = 0.5;
         sh_out_c = 0.2;
+        delay = 1.0;
 
-    // === 8. РАСЧЕТ ДЛЯ ЛИНИИ 1.6 (объем ≥ 5000 мл) ===
-    } else if (line === "LINE_1_6" && vol >= 5000) {
-        // Скорости насоса (реальные настройки)
-        speed1 = 80.00;
+    // === 8. РАСЧЕТ ДЛЯ ЛИНИИ 1.6 (объем ≥ 5000 мл, вязкость ≤ 100) ===
+    } else if (line === "LINE_1_6" && vol >= 4500 && vol <= 5500 && visc <= 100) {
+        // === ЭТАЛОННЫЕ НАСТРОЙКИ ДЛЯ ВОДЫ/АСПИРИНА НА ЛИНИИ 1.6 ===
+        speed1 = 60.00;
         speed2 = 80.00;
-        speed3 = 45.00;
+        speed3 = 40.00;
         
-        // Объемы перехода (реальные настройки)
-        k_t2 = 0.18;   // 18% от общего веса → ~900 мл
-        k_t3 = 0.98;   // 98% от общего веса → ~4900 мл
+        k_t2 = 0.16;   // 800/5100 ≈ 0.16
+        k_t3 = 0.98;   // 5000/5100 ≈ 0.98
         
-        // Скорости подъема (реальные настройки)
-        ls1 = 25;
-        ls2 = 25;
-        ls3 = 15;
+        ls1 = 10;
+        ls2 = 15;
+        ls3 = 10;
         
-        // Положения сопел (реальные настройки)
         bp = 30;
-        tp = Math.round(bottleHeight - 52);
-        wp = Math.round(bottleHeight + 45);
-        np1 = bp;
-        np2 = Math.round(bp + (tp - bp) * 0.60);
-        np3 = tp;
+        tp = 200;
+        wp = 345;
+        np1 = 30;
+        np2 = 80;
+        np3 = 192;
         
-        // Тайминги конвейера (реальные настройки)
         conv_m = 80.00;
-        conv_l = 80.00;
-        sh_in_c = 0.3;
-        sh_in_o = 0.5;
+        conv_l = 25.00;
+        sh_in_c = 0.0;
+        sh_in_o = 1.0;
         sh_out_c = 0.0;
+        tr_down = 100;
+        delay = 2.5;
 
     // === 9. РАСЧЕТ ДЛЯ СРЕДНЕГО ФОРМАТА (1000-1500 мл) ===
     } else if (vol <= 1500) {
@@ -138,6 +138,9 @@ function runUniversalCalculation() {
         sh_in_c = 0.0;
         sh_in_o = 0.5;
         sh_out_c = 0.2;
+        
+        let calculatedDelay = (vol / 5000) * (80 / speed1) * (1.0 - vF);
+        delay = parseFloat(Math.max(calculatedDelay, 0.0).toFixed(1));
 
     // === 10. РАСЧЕТ ДЛЯ БОЛЬШОГО ФОРМАТА (> 1500 мл) ===
     } else {
@@ -171,6 +174,9 @@ function runUniversalCalculation() {
         sh_in_c = 0.5;
         sh_in_o = 0.0;
         sh_out_c = 0.0;
+        
+        let calculatedDelay = (vol / 5000) * (80 / speed1) * (1.0 - vF);
+        delay = parseFloat(Math.max(calculatedDelay, 0.0).toFixed(1));
     }
 
     // === ОГРАНИЧЕНИЕ СКОРОСТЕЙ ===
@@ -184,7 +190,7 @@ function runUniversalCalculation() {
     // === 11. РАСЧЕТ ВЕСА ===
     let baseDensity;
     if (vol > 1500) {
-        baseDensity = (line === "LINE_1_6" && vol >= 5000) ? 1.002 : 0.98;
+        baseDensity = (line === "LINE_1_6" && vol >= 4500 && vol <= 5500 && visc <= 100) ? 1.02 : 0.98;
     } else {
         baseDensity = isSmallLiquidFormat ? 0.96 : 0.94;
     }
@@ -194,20 +200,11 @@ function runUniversalCalculation() {
     let t2 = Math.round(tw * k_t2);
     let t3 = Math.round(tw * k_t3);
 
-    // === 12. РАСЧЕТ ЗАДЕРЖКИ ===
-    let delay = 0.0;
-    if (isSmallLiquidFormat) {
-        delay = 1.0;
-    } else {
-        let calculatedDelay = (vol / 5000) * (80 / speed1) * (1.0 - vF);
-        delay = parseFloat(Math.max(calculatedDelay, 0.0).toFixed(1));
-    }
-
-    // === 13. НАЗВАНИЕ ПРОДУКТА ===
+    // === 12. НАЗВАНИЕ ПРОДУКТА ===
     let prodLabel = "DETAIL 500";
     if (vol > 1500) {
-        if (line === "LINE_1_6" && vol >= 5000) {
-            prodLabel = "AZELIT/6L";
+        if (line === "LINE_1_6" && vol >= 4500 && vol <= 5500 && visc <= 100) {
+            prodLabel = "REST05L";
         } else if (visc <= 200) {
             prodLabel = "ASPERIN 4K";
         } else {
@@ -218,10 +215,10 @@ function runUniversalCalculation() {
         prodLabel = isSmallLiquidFormat ? "AZELIT0,6" : "DETAIL 500";
     }
 
-    // === 14. БЛОКИРОВКА КОНВЕЙЕРА ===
+    // === 13. БЛОКИРОВКА КОНВЕЙЕРА ===
     const stopConv = (vol <= 1000);
 
-    // === 15. ВЫВОД ПАРАМЕТРОВ ===
+    // === 14. ВЫВОД ПАРАМЕТРОВ ===
     const fields = {
         'val_lift_speed_3': ls3,
         'val_nozzle_pos_3': np3,
