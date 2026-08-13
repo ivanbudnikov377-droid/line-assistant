@@ -63,6 +63,16 @@
             <span>💧 0 ед. — Аспирин / Вода | 🍯 1450-1850 ед. — Мыло Milana</span>
         </div>
 
+        <!-- === КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ О ШИБЕРЕ (ВСЕГДА ВИДНО) === -->
+        <div class="shiber-critical-warning">
+            <div class="shiber-warning-title">
+                ⚠️ ЗАДЕРЖКА ОТКРЫТИЯ ВХОДНОГО ШИБЕРА НИЖЕ 0.4 КРИТИЧЕСКИ ОПАСНА!
+            </div>
+            <div class="shiber-warning-sub">
+                НЕДОПУСТИМЫЙ РЕЖИМ РАБОТЫ! ТРЕБУЕТСЯ НЕМЕДЛЕННАЯ КОРРЕКТИРОВКА.
+            </div>
+        </div>
+
         <div class="engineer-disclaimer">
             ⚠️ ВНИМАНИЕ:<br>
             Данные настройки являются <span>РЕКОМЕНДАЦИЕЙ</span>, а не принуждением! Финальная корректировка уставок остается за наладчиком линии розлива.
@@ -433,7 +443,7 @@
         <div class="form-group-labeling">
             <label class="block text-xs font-bold text-zinc-400 mb-1">Тип укупорки:</label>
             <div class="flex gap-2">
-                <button id="cap-type-cap" onclick="selectCappingType('cap')" class="flex-1 py-2 rounded text-xs font-bold uppercase tracking-wider transition border-2 bg-zinc-800 border-zinc-600 text-zinc-400 cursor-pointer">
+                <button id="cap-type-cap" onclick="selectCappingType('cap')" class="flex-1 py-2 rounded text-xs font-bold uppercase tracking-wider transition border-2 btn-cap-active cursor-pointer">
                     🏷 Крышка
                 </button>
                 <button id="cap-type-trigger" onclick="selectCappingType('trigger')" class="flex-1 py-2 rounded text-xs font-bold uppercase tracking-wider transition border-2 bg-zinc-800 border-zinc-600 text-zinc-400 cursor-pointer">
