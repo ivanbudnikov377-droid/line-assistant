@@ -1,3 +1,4 @@
+
 :root {
     --bg-color: #080b11;
     --card-bg: #111827;
@@ -8,6 +9,12 @@
     --text: #e2e8f0;
     --text-muted: #6b7280;
     --border: #1f2937;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
