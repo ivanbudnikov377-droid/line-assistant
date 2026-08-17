@@ -68,9 +68,11 @@ function runUniversalCalculation() {
         bp = 35;
         tp = Math.round(bottleHeight - 50);
         wp = Math.round(bottleHeight + 74);
-        np1 = bp;
-        np2 = Math.round(bp + (tp - bp) * 0.50);
-        np3 = Math.round(bp + (tp - bp) * 0.90);
+        
+        // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
+        np1 = 40;
+        np2 = Math.round(bottleHeight * 0.20);
+        np3 = Math.round(bottleHeight * 0.80);
         
         conv_m = 60.00;
         conv_l = 0.00;
@@ -79,34 +81,117 @@ function runUniversalCalculation() {
         sh_out_c = 0.2;
         delay = 1.0;
 
-    // === 8. РАСЧЕТ ДЛЯ ЛИНИИ 1.6 (объем ≥ 5000 мл, вязкость ≤ 100) ===
-    } else if (line === "LINE_1_6" && vol >= 4500 && vol <= 5500 && visc <= 100) {
-        // === ЭТАЛОННЫЕ НАСТРОЙКИ ДЛЯ ВОДЫ/АСПИРИНА НА ЛИНИИ 1.6 ===
-        speed1 = 60.00;
-        speed2 = 80.00;
-        speed3 = 40.00;
+    // === 8. СПЕЦИАЛЬНЫЕ НАСТРОЙКИ ДЛЯ ЛИНИИ 1.6 ===
+    } else if (line === "LINE_1_6") {
         
-        k_t2 = 0.16;   // 800/5100 ≈ 0.16
-        k_t3 = 0.98;   // 5000/5100 ≈ 0.98
+        // === 8a. ОБЪЕМ 5000 мл, ВЯЗКОСТЬ ≤ 100 (фиксированные настройки) ===
+        if (vol >= 4500 && vol <= 5500 && visc <= 100) {
+            speed1 = 60.00;
+            speed2 = 80.00;
+            speed3 = 40.00;
+            
+            k_t2 = 0.16;
+            k_t3 = 0.98;
+            
+            ls1 = 10;
+            ls2 = 15;
+            ls3 = 10;
+            
+            // === ФИКСИРОВАННЫЕ ПОЛОЖЕНИЯ ДЛЯ 5000 мл ===
+            bp = 30;
+            tp = 200;
+            wp = 345;
+            np1 = 30;
+            np2 = 80;
+            np3 = 192;
+            
+            conv_m = 80.00;
+            conv_l = 25.00;
+            sh_in_c = 0.0;
+            sh_in_o = 1.0;
+            sh_out_c = 0.0;
+            tr_down = 100;
+            delay = 2.5;
         
-        ls1 = 10;
-        ls2 = 15;
-        ls3 = 10;
+        // === 8b. ОБЪЕМ 1000 мл, ВЯЗКОСТЬ 0 ===
+        } else if (vol >= 900 && vol <= 1100 && visc === 0) {
+            speed1 = 30.00;
+            speed2 = 55.00;
+            speed3 = 18.00;
+            
+            k_t2 = 0.245;
+            k_t3 = 0.888;
+            
+            ls1 = 30;
+            ls2 = 50;
+            ls3 = 30;
+            
+            // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
+            bp = 40;
+            tp = Math.round(bottleHeight - 10);
+            wp = Math.round(bottleHeight + 100);
+            np1 = 40;
+            np2 = Math.round(bottleHeight * 0.20);
+            np3 = Math.round(bottleHeight * 0.80);
+            
+            conv_m = 60.00;
+            conv_l = 0.00;
+            sh_in_c = 0.0;
+            sh_in_o = 0.5;
+            sh_out_c = 0.2;
+            tr_down = 100;
+            delay = 1.0;
         
-        bp = 30;
-        tp = 200;
-        wp = 345;
-        np1 = 30;
-        np2 = 80;
-        np3 = 192;
-        
-        conv_m = 80.00;
-        conv_l = 25.00;
-        sh_in_c = 0.0;
-        sh_in_o = 1.0;
-        sh_out_c = 0.0;
-        tr_down = 100;
-        delay = 2.5;
+        // === 8c. ОСТАЛЬНЫЕ СЛУЧАИ ДЛЯ ЛИНИИ 1.6 ===
+        } else {
+            // Скорости насоса по стандартной формуле
+            speed1 = 40 + 5 * vF;
+            speed2 = 70 + 5 * vF;
+            speed3 = 40 + 5 * vF;
+            
+            if (visc < 800) {
+                const liquidDamping = 0.85 + (0.15 * (visc / 800));
+                speed1 = speed1 * liquidDamping;
+                speed3 = speed3 * liquidDamping;
+            }
+            
+            speed1 = Math.min(speed1, 100.00);
+            speed2 = Math.min(speed2, 100.00);
+            speed3 = Math.min(speed3, 100.00);
+            
+            // Скорости подъема с учетом высоты, объема и вязкости
+            const heightFactor = bottleHeight / 230;
+            const volumeFactor = 1000 / vol;
+            const viscosityFactor = 1 + (1 - vF) * 0.5;
+            
+            const baseLiftSpeed = Math.round(30 * heightFactor * volumeFactor * viscosityFactor);
+            
+            ls1 = Math.max(Math.round(baseLiftSpeed * 0.6), 10);
+            ls2 = Math.max(Math.round(baseLiftSpeed * 1.0), 10);
+            ls3 = Math.max(Math.round(baseLiftSpeed * 0.6), 10);
+            
+            ls1 = Math.min(ls1, 100);
+            ls2 = Math.min(ls2, 100);
+            ls3 = Math.min(ls3, 100);
+            
+            // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
+            bp = 40;
+            tp = Math.round(bottleHeight - 10);
+            wp = Math.round(bottleHeight + 100);
+            np1 = 40;
+            np2 = Math.round(bottleHeight * 0.20);
+            np3 = Math.round(bottleHeight * 0.80);
+            
+            conv_m = 70.00;
+            conv_l = 15.00;
+            sh_in_c = 0.5;
+            sh_in_o = 0.0;
+            sh_out_c = 0.0;
+            
+            let calculatedDelay = (vol / 5000) * (80 / speed1) * (1.0 - vF);
+            delay = parseFloat(Math.max(calculatedDelay, 1.0).toFixed(1));
+            tr_down = 100;
+        }
 
     // === 9. РАСЧЕТ ДЛЯ СРЕДНЕГО ФОРМАТА (1000-1500 мл) ===
     } else if (vol <= 1500) {
@@ -123,15 +208,14 @@ function runUniversalCalculation() {
         ls2 = baseLiftSpeed;
         ls1 = Math.max(Math.round(ls2 * 0.9), 15);
         ls3 = Math.max(Math.round(ls2 * 0.85), 15);
+        
+        // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
         bp = 40;
         tp = Math.round(bottleHeight - 10);
         wp = Math.round(bottleHeight + 100);
-        np1 = bp;
-        np2 = Math.round(bp + (tp - bp) * 0.35);
-        np3 = Math.round(bp + (tp - bp) * 0.85);
-        if (np3 >= tp) {
-            np3 = Math.round(tp - 5);
-        }
+        np1 = 40;
+        np2 = Math.round(bottleHeight * 0.20);
+        np3 = Math.round(bottleHeight * 0.80);
         
         conv_m = 60.00;
         conv_l = 0.00;
@@ -140,11 +224,10 @@ function runUniversalCalculation() {
         sh_out_c = 0.2;
         
         let calculatedDelay = (vol / 5000) * (80 / speed1) * (1.0 - vF);
-        delay = parseFloat(Math.max(calculatedDelay, 0.0).toFixed(1));
+        delay = parseFloat(Math.max(calculatedDelay, 1.0).toFixed(1));
 
     // === 10. РАСЧЕТ ДЛЯ БОЛЬШОГО ФОРМАТА (> 1500 мл) ===
     } else {
-        // Для объемов > 1500 мл используем увеличенный коэффициент
         let baseMultiplier;
         if (vol > 3000) {
             baseMultiplier = 65.0;
@@ -159,15 +242,14 @@ function runUniversalCalculation() {
         ls2 = baseLiftSpeed;
         ls1 = Math.max(Math.round(ls2 * 0.9), 15);
         ls3 = Math.max(Math.round(ls2 * 0.85), 15);
+        
+        // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
         bp = 40;
         tp = Math.round(bottleHeight - 10);
         wp = Math.round(bottleHeight + 100);
-        np1 = bp;
-        np2 = Math.round(bp + (tp - bp) * 0.35);
-        np3 = Math.round(bp + (tp - bp) * 0.85);
-        if (np3 >= tp) {
-            np3 = Math.round(tp - 5);
-        }
+        np1 = 40;
+        np2 = Math.round(bottleHeight * 0.20);
+        np3 = Math.round(bottleHeight * 0.80);
         
         conv_m = 70.00;
         conv_l = 15.00;
@@ -176,7 +258,7 @@ function runUniversalCalculation() {
         sh_out_c = 0.0;
         
         let calculatedDelay = (vol / 5000) * (80 / speed1) * (1.0 - vF);
-        delay = parseFloat(Math.max(calculatedDelay, 0.0).toFixed(1));
+        delay = parseFloat(Math.max(calculatedDelay, 1.0).toFixed(1));
     }
 
     // === ОГРАНИЧЕНИЕ СКОРОСТЕЙ ===
@@ -191,6 +273,8 @@ function runUniversalCalculation() {
     let baseDensity;
     if (vol > 1500) {
         baseDensity = (line === "LINE_1_6" && vol >= 4500 && vol <= 5500 && visc <= 100) ? 1.02 : 0.98;
+    } else if (line === "LINE_1_6" && vol >= 900 && vol <= 1100 && visc === 0) {
+        baseDensity = 0.98;
     } else {
         baseDensity = isSmallLiquidFormat ? 0.96 : 0.94;
     }
@@ -200,20 +284,8 @@ function runUniversalCalculation() {
     let t2 = Math.round(tw * k_t2);
     let t3 = Math.round(tw * k_t3);
 
-    // === 12. НАЗВАНИЕ ПРОДУКТА ===
-    let prodLabel = "DETAIL 500";
-    if (vol > 1500) {
-        if (line === "LINE_1_6" && vol >= 4500 && vol <= 5500 && visc <= 100) {
-            prodLabel = "REST05L";
-        } else if (visc <= 200) {
-            prodLabel = "ASPERIN 4K";
-        } else {
-            prodLabel = "5L GEL";
-        }
-        if (visc > 100 && visc < 1000) prodLabel = "EVA 5L";
-    } else {
-        prodLabel = isSmallLiquidFormat ? "AZELIT0,6" : "DETAIL 500";
-    }
+    // === 12. НАЗВАНИЕ ПРОДУКТА (РЕЦЕПТ № X.X) ===
+    const prodLabel = "РЕЦЕПТ № " + lineNum;
 
     // === 13. БЛОКИРОВКА КОНВЕЙЕРА ===
     const stopConv = (vol <= 1000);
@@ -260,18 +332,6 @@ function runUniversalCalculation() {
     const noticeEl = document.getElementById('viscosityNotice');
     if (noticeEl) {
         noticeEl.style.display = visc > 1000 ? 'block' : 'none';
-    }
-
-    // === ПРОВЕРКА ЗАДЕРЖКИ ШИБЕРА (КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ) ===
-    const shiberWarning = document.getElementById('shiber-warning');
-    if (shiberWarning) {
-        // Показываем предупреждение если задержка открытия шибера < 0.4 
-        // И это линия 1.6 с объемом 5000 мл
-        if (sh_in_o < 0.4 && line === "LINE_1_6" && vol >= 4500 && vol <= 5500) {
-            shiberWarning.style.display = 'block';
-        } else {
-            shiberWarning.style.display = 'none';
-        }
     }
 }
 
