@@ -66,7 +66,7 @@ function runUniversalCalculation() {
         ls2 = 75;
         ls3 = 65;
         bp = 35;
-        tp = Math.round(bottleHeight - 50);
+        tp = Math.round(bottleHeight - 30);
         wp = Math.round(bottleHeight + 74);
         
         // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
@@ -176,7 +176,7 @@ function runUniversalCalculation() {
             
             // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
             bp = 40;
-            tp = Math.round(bottleHeight - 10);
+            tp = Math.round(bottleHeight - 30);
             wp = Math.round(bottleHeight + 100);
             np1 = 40;
             np2 = Math.round(bottleHeight * 0.20);
@@ -290,7 +290,16 @@ function runUniversalCalculation() {
     // === 13. БЛОКИРОВКА КОНВЕЙЕРА ===
     const stopConv = (vol <= 1000);
 
-    // === 14. ВЫВОД ПАРАМЕТРОВ ===
+    // === 14. ФОРМИРОВАНИЕ ЗНАЧЕНИЯ ДЛЯ 2-Й СКОРОСТИ НАСОСА ===
+    let pumpSpeed2Display;
+    if (visc > 1000) {
+        const topPourSpeed = speed2 * 0.88; // верхний налив на 12% меньше
+        pumpSpeed2Display = "(ВЕРХН.) " + topPourSpeed.toFixed(2) + "  (ДОН.) " + speed2.toFixed(2);
+    } else {
+        pumpSpeed2Display = speed2.toFixed(2);
+    }
+
+    // === 15. ВЫВОД ПАРАМЕТРОВ ===
     const fields = {
         'val_lift_speed_3': ls3,
         'val_nozzle_pos_3': np3,
@@ -300,7 +309,7 @@ function runUniversalCalculation() {
         'val_nozzle_pos_1': np1,
         'val_pump_speed_3': speed3.toFixed(2),
         'val_trans_volume_3': t3,
-        'val_pump_speed_2': speed2.toFixed(2),
+        'val_pump_speed_2': pumpSpeed2Display,
         'val_trans_volume_2': t2,
         'val_pump_speed_1': speed1.toFixed(2),
         'val_wait_point': wp,
@@ -325,7 +334,7 @@ function runUniversalCalculation() {
 
     const badge = document.getElementById('sub_conveyor_stop_badge');
     if (badge) {
-        badge.textContent = stopConv ? "ЗАПУСТИТЬ (ОСТАНОВ АКТИВЕН)" : "ОСТАНОВИТЬ (ХОД НЕПРЕРЫВЕН)";
+        badge.textContent = stopConv ? "ЗАПУСТИТЬ (ОСТАНОВКА АКТИВНА)" : "ОСТАНОВИТЬ (ХОД НЕПРЕРЫВЕН)";
         badge.className = stopConv ? "status-badge badge-top-active" : "status-badge badge-stop-disabled";
     }
 
