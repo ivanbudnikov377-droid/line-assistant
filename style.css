@@ -1,4 +1,3 @@
-
 :root {
     --bg-color: #080b11;
     --card-bg: #111827;
@@ -360,6 +359,16 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
     }
 }
 
+/* === СТИЛИ ДЛЯ ЯЧЕЙКИ 2-Й СКОРОСТИ НАСОСА (ВЕРХНИЙ/ДОННЫЙ НАЛИВ) === */
+#val_pump_speed_2 {
+    font-size: 11px;
+    width: 85px;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+    padding: 2px 4px;
+}
+
 @media (max-width: 768px) {
     #content-labeling {
         margin-top: 0.5rem;
@@ -381,6 +390,23 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
     .shiber-warning-sub {
         font-size: 12px;
     }
+    
+    /* Увеличиваем ширину ячейки для 2-й скорости на мобильных */
+    #val_pump_speed_2 {
+        font-size: 10px;
+        width: 80px;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.2;
+        padding: 2px 3px;
+    }
+    
+    /* Уменьшаем размер шрифта в правых ячейках на мобильных */
+    .plc-val-box-r {
+        font-size: 11px;
+        width: 70px;
+        padding: 2px 3px;
+    }
 }
 
 @media (min-width: 768px) {
@@ -394,4 +420,54 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
     .plc-label-r { font-size: 11.5px; }
     .plc-val-box { width: 55px; }
     .plc-val-box-r { width: 80px; }
+    
+    /* Для десктопа увеличиваем ширину ячейки 2-й скорости */
+    #val_pump_speed_2 {
+        font-size: 12px;
+        width: 100px;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.3;
+    }
+}
+
+/* Стили для вкладки Укупор */
+#content-capping {
+    background-color: #18181b;
+    border: 1px solid #27272a;
+}
+
+#content-capping select,
+#content-capping input {
+    background-color: #09090b;
+    border-color: #27272a;
+    color: #fbbf24;
+    font-size: 14px;
+}
+
+#content-capping select:focus,
+#content-capping input:focus {
+    border-color: #f59e0b;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+#content-capping .form-group-labeling {
+    margin-bottom: 12px;
+}
+
+#content-capping .form-group-labeling:last-child {
+    margin-bottom: 0;
+}
+
+.btn-cap-active {
+    background-color: #d97706;
+    border-color: #d97706;
+    color: #000;
+}
+
+.btn-trigger-active {
+    background-color: #d97706;
+    border-color: #d97706;
+    color: #000;
 }
