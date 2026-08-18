@@ -128,7 +128,7 @@ function runUniversalCalculation() {
             
             // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
             bp = 40;
-            tp = Math.round(bottleHeight - 10);
+            tp = Math.round(bottleHeight - 30);
             wp = Math.round(bottleHeight + 100);
             np1 = 40;
             np2 = Math.round(bottleHeight * 0.20);
@@ -211,7 +211,7 @@ function runUniversalCalculation() {
         
         // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
         bp = 40;
-        tp = Math.round(bottleHeight - 10);
+        tp = Math.round(bottleHeight - 30);
         wp = Math.round(bottleHeight + 100);
         np1 = 40;
         np2 = Math.round(bottleHeight * 0.20);
@@ -245,7 +245,7 @@ function runUniversalCalculation() {
         
         // === ПОЛОЖЕНИЯ СОПЕЛ: 1-е = 40, 2-е = 20% от высоты, 3-е = 80% от высоты ===
         bp = 40;
-        tp = Math.round(bottleHeight - 10);
+        tp = Math.round(bottleHeight - 30);
         wp = Math.round(bottleHeight + 100);
         np1 = 40;
         np2 = Math.round(bottleHeight * 0.20);
