@@ -16,7 +16,7 @@
         💧 Налив
     </button>
     <button id="btn-tab-labeling" onclick="switchTab('labeling')" class="flex-1 bg-zinc-900 text-zinc-400 font-bold py-2 rounded text-xs uppercase tracking-wider transition border border-zinc-800 cursor-pointer">
-        🏷 Этикетка
+        🏷 Этикетовщик
     </button>
     <button id="btn-tab-capping" onclick="switchTab('capping')" class="flex-1 bg-zinc-900 text-zinc-400 font-bold py-2 rounded text-xs uppercase tracking-wider transition border border-zinc-800 cursor-pointer">
         🏺 Укупор
@@ -63,7 +63,7 @@
             <span>💧 0 ед. — Аспирин / Вода | 🍯 1450-1850 ед. — Мыло Milana</span>
         </div>
 
-        <!-- === КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ О ШИБЕРЕ (ВСЕГДА ВИДНО) === -->
+        <!-- === КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ О ШИБЕРЕ === -->
         <div class="shiber-critical-warning">
             <div class="shiber-warning-title">
                 ⚠️ ЗАДЕРЖКА ОТКРЫТИЯ ВХОДНОГО ШИБЕРА НИЖЕ 0.4 КРИТИЧЕСКИ ОПАСНА!
@@ -241,169 +241,133 @@
 </div>
 
 <!-- ============================================================
-     ВКЛАДКА: ЭТИКЕТКА
+     ВКЛАДКА: ЭТИКЕТОВЩИК
      ============================================================ -->
 <div id="content-labeling" class="max-w-md mx-auto bg-zinc-950 text-gray-100 p-4 font-sans select-none hidden" style="position: relative; overflow: hidden; border-radius: 8px;">
     
+    <!-- Фоновая надпись -->
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); font-size: 52px; font-weight: 900; color: rgba(74, 222, 128, 0.08); text-shadow: 0 0 20px rgba(74, 222, 128, 0.2), 0 0 50px rgba(22, 163, 74, 0.1); letter-spacing: 2px; white-space: nowrap; pointer-events: none; z-index: 0; user-select: none;">
         GRASS UNIVERSITY
     </div>
     
+    <!-- Шапка модуля -->
     <div class="border-b border-zinc-800 pb-3 mb-4 flex justify-between items-center" style="position: relative; z-index: 1;">
         <div>
-            <h1 class="text-xl font-bold tracking-wider text-amber-500">🏷 ARSANMAK + HERMA</h1>
-            <p class="text-xs text-zinc-500">Калибровка и переналадка аппликатора</p>
+            <h1 class="text-xl font-bold tracking-wider text-amber-500">🏷 ЭТИКЕТОВЩИК</h1>
+            <p class="text-xs text-zinc-500">Калибровка частот по скорости конвейера</p>
         </div>
         <div class="bg-amber-600 text-black font-black text-xs px-2 py-1 rounded">⚙ HERMA</div>
     </div>
     
+    <!-- Основной блок -->
     <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-4 shadow-xl" style="position: relative; z-index: 1;">
-        <h2 class="text-sm font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-800 pb-1">⚙ Параметры Наладки</h2>
         
+        <!-- Выбор линии -->
         <div class="form-group-labeling">
-            <label class="block text-xs font-bold text-zinc-400 mb-1">Форма флакона:</label>
-            <select id="bottle-type" onchange="toggleConeInput()" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-amber-400 focus:outline-none">
-                <option value="flat">Прямой плоский (на 2 этикетки)</option>
-                <option value="cone">Конусный (на 2 этикетки)</option>
-                <option value="belly">Пузатый сферический (на 2 этикетки)</option>
-                <option value="round">Круглый (круговая обкатка)</option>
+            <label class="block text-xs font-bold text-zinc-400 mb-1">Технологическая линия:</label>
+            <select id="labelerLineSelect" onchange="calculateLabelerFrequencies()" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-amber-400 focus:outline-none">
+                <option value="LINE_1_1">Линия 1.1</option>
+                <option value="LINE_1_2">Линия 1.2</option>
+                <option value="LINE_1_3" selected>Линия 1.3</option>
+                <option value="LINE_1_4">Линия 1.4</option>
+                <option value="LINE_1_5">Линия 1.5</option>
+                <option value="LINE_1_6">Линия 1.6</option>
             </select>
         </div>
         
+        <!-- Поле ввода скорости конвейера -->
         <div class="form-group-labeling">
-            <label class="block text-xs font-bold text-zinc-400 mb-1">Материал этикетки:</label>
-            <select id="label-material" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-amber-400 focus:outline-none">
-                <option value="pp">Полипропилен (ПП / Пленка)</option>
-                <option value="paper">Бумага (Жесткая основа)</option>
-            </select>
+            <label class="block text-xs font-bold text-zinc-400 mb-1">📏 Скорость конвейера (м/мин):</label>
+            <div class="flex gap-2">
+                <input id="conveyor-speed-input" type="number" step="0.1" value="14.0" min="0" max="30" oninput="calculateLabelerFrequencies()" class="flex-1 bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-center font-mono text-green-400 focus:outline-none focus:border-amber-500">
+                <span class="text-xs text-zinc-500 self-center">м/мин</span>
+            </div>
+            <p class="text-xs text-zinc-500 mt-1">📌 Замерьте ручным тахометром скорость ленты конвейера</p>
         </div>
         
-        <div class="form-group-labeling">
-            <label class="block text-xs font-bold text-zinc-400 mb-1">Линейная скорость конвейера (м/с):</label>
-            <input id="conveyor-speed" type="number" step="0.01" value="0.20" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-center font-mono text-green-400 focus:outline-none">
-        </div>
-        
-        <div class="form-group-labeling">
-            <label class="block text-xs font-bold text-zinc-400 mb-1">Высота флакона (мм):</label>
-            <input id="bottle-height" type="number" step="1" value="200" min="50" max="500" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-center font-mono text-green-400 focus:outline-none">
-        </div>
-
-        <div class="form-group-labeling">
-            <label class="block text-xs font-bold text-zinc-400 mb-1">Высота этикетки (мм):</label>
-            <input id="label-height" type="number" step="1" value="100" min="20" max="300" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-center font-mono text-green-400 focus:outline-none">
-        </div>
-        
-        <!-- ============================================================
-             БЛОК НАСТРОЙКИ УГЛА НОЖА (ИНКЛИНОМЕТР)
-             ============================================================ -->
-        <div class="form-group-labeling">
-            <label class="block text-xs font-bold text-amber-400 mb-1">📐 НАСТРОЙКА УГЛА НОЖА (ИНКЛИНОМЕТР)</label>
-            <div class="bg-zinc-800 rounded-lg p-3 space-y-3 mt-1">
-                
-                <div class="text-xs text-zinc-500">
-                    <span class="text-amber-400">➡️</span> Тип флакона: <span id="display-bottle-type" class="text-green-400 font-bold">Прямой плоский</span>
+        <!-- Результаты расчета -->
+        <div class="border-t border-zinc-800 pt-3 mt-2">
+            <h3 class="text-xs font-bold text-amber-400 uppercase tracking-widest mb-3">📊 РАССЧИТАННЫЕ ЧАСТОТЫ (Гц)</h3>
+            
+            <!-- Конвейер -->
+            <div class="bg-zinc-800 rounded-lg p-3 mb-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-zinc-300">Конвейер</span>
+                    <span class="text-sm font-mono font-bold text-green-400" id="labeler-conveyor-freq">40.0</span>
+                    <span class="text-xs text-zinc-500">Гц</span>
                 </div>
-                
-                <div class="flex justify-between items-center border-b border-zinc-700 pb-1">
-                    <span class="text-xs text-zinc-400">🎯 Целевой угол ножа:</span>
-                    <span class="text-green-400 font-bold font-mono" id="target-knife-angle">0.0°</span>
+                <div class="w-full bg-zinc-700 rounded-full h-1.5 mt-1">
+                    <div class="bg-green-500 h-1.5 rounded-full transition-all duration-300" id="labeler-conveyor-bar" style="width: 67%"></div>
                 </div>
-                
-                <div>
-                    <label class="block text-xs text-zinc-400 mb-1">📏 Угол стенки флакона (инклинометр):</label>
-                    <div class="flex gap-2">
-                        <input type="number" id="bottle-wall-angle" step="0.1" value="0.0" class="flex-1 bg-zinc-950 border border-zinc-700 rounded p-2 text-sm text-center font-mono text-amber-400 focus:outline-none focus:border-amber-500">
-                        <span class="text-xs text-zinc-500 self-center">°</span>
-                    </div>
-                    <p class="text-xs text-zinc-500 mt-1">📌 Приложите инклинометр к плоскости наклейки флакона</p>
+                <div class="flex justify-between text-xs text-zinc-500 mt-0.5">
+                    <span>0 Гц</span>
+                    <span>макс: 60 Гц</span>
                 </div>
-                
-                <div>
-                    <label class="block text-xs text-zinc-400 mb-1">🔧 Текущий угол ножа (инклинометр):</label>
-                    <div class="flex gap-2">
-                        <input type="number" id="current-knife-angle" step="0.1" value="0.0" class="flex-1 bg-zinc-950 border border-zinc-700 rounded p-2 text-sm text-center font-mono text-amber-400 focus:outline-none focus:border-amber-500">
-                        <span class="text-xs text-zinc-500 self-center">°</span>
-                    </div>
-                    <p class="text-xs text-zinc-500 mt-1">📌 Установите инклинометр на плоскость ножа</p>
+            </div>
+            
+            <!-- Прижимная лента -->
+            <div class="bg-zinc-800 rounded-lg p-3 mb-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-zinc-300">Прижимная лента</span>
+                    <span class="text-sm font-mono font-bold text-green-400" id="labeler-press-freq">63.7</span>
+                    <span class="text-xs text-zinc-500">Гц</span>
                 </div>
-                
-                <div id="knife-adjustment-hint" class="bg-zinc-950 border border-green-700 rounded-lg p-2 text-center">
-                    <span class="text-xs text-zinc-500">🔄 Рекомендация:</span>
-                    <span id="knife-adjustment-text" class="text-green-400 font-bold text-sm block mt-1">✅ Угол настроен правильно!</span>
+                <div class="w-full bg-zinc-700 rounded-full h-1.5 mt-1">
+                    <div class="bg-green-500 h-1.5 rounded-full transition-all duration-300" id="labeler-press-bar" style="width: 71%"></div>
                 </div>
-                
-                <div class="border-t border-zinc-700 pt-2 mt-1">
-                    <label class="block text-xs text-zinc-400 mb-1">📏 Текущий угол ребра ножа (инклинометр):</label>
-                    <div class="flex gap-2">
-                        <input type="number" id="current-edge-angle" step="0.1" value="0.0" class="flex-1 bg-zinc-950 border border-zinc-700 rounded p-2 text-sm text-center font-mono text-amber-400 focus:outline-none focus:border-amber-500">
-                        <span class="text-xs text-zinc-500 self-center">°</span>
-                    </div>
-                    <p class="text-xs text-zinc-500 mt-1">📌 Приложите инклинометр к ребру ножа (по движению конвейера)</p>
+                <div class="flex justify-between text-xs text-zinc-500 mt-0.5">
+                    <span>0 Гц</span>
+                    <span>макс: 90 Гц</span>
                 </div>
-                
-                <div id="edge-adjustment-hint" class="bg-zinc-950 border border-green-700 rounded-lg p-2 text-center">
-                    <span class="text-xs text-zinc-500">🔄 Рекомендация:</span>
-                    <span id="edge-adjustment-text" class="text-green-400 font-bold text-sm block mt-1">✅ Нож параллелен движению!</span>
+            </div>
+            
+            <!-- Обкатчик -->
+            <div class="bg-zinc-800 rounded-lg p-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-zinc-300">Обкатчик</span>
+                    <span class="text-sm font-mono font-bold text-green-400" id="labeler-roller-freq">30.0</span>
+                    <span class="text-xs text-zinc-500">Гц</span>
                 </div>
-                
-                <div class="flex gap-2 pt-1">
-                    <button onclick="checkKnifeAngles()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-black font-bold py-2 rounded text-xs uppercase tracking-wider transition cursor-pointer">
-                        🔄 Проверить углы
-                    </button>
-                    <button onclick="resetInclinometerFields()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 rounded text-xs uppercase tracking-wider transition cursor-pointer">
-                        🔄 Сбросить
-                    </button>
+                <div class="w-full bg-zinc-700 rounded-full h-1.5 mt-1">
+                    <div class="bg-green-500 h-1.5 rounded-full transition-all duration-300" id="labeler-roller-bar" style="width: 50%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-zinc-500 mt-0.5">
+                    <span>0 Гц</span>
+                    <span>макс: 60 Гц</span>
                 </div>
             </div>
         </div>
         
-        <div id="cone-angle-block" class="form-group-labeling hidden">
-            <label class="block text-xs font-bold text-amber-400 mb-1">Угол стенки флакона по лазерному угломеру (град°):</label>
-            <input id="cone-angle" type="number" step="0.1" value="4.5" class="w-full bg-zinc-950 border border-amber-800 rounded p-2 text-sm text-center font-mono text-amber-400 focus:outline-none">
-        </div>
-        
-        <div id="belly-params" class="form-group-labeling hidden">
-            <label class="block text-xs font-bold text-amber-400 mb-1">Кривизна пуза (0-1):</label>
-            <input id="belly-curvature" type="range" min="0" max="1" step="0.1" value="0.5" oninput="document.getElementById('belly-curvature-value').textContent = this.value" class="w-full">
-            <div class="flex justify-between text-xs text-zinc-500">
-                <span>Плоский</span>
-                <span id="belly-curvature-value">0.5</span>
-                <span>Сильно пузатый</span>
+        <!-- Максимальные значения -->
+        <div class="border-t border-zinc-800 pt-3 mt-2">
+            <h3 class="text-xs font-bold text-amber-400 uppercase tracking-widest mb-2">⚠️ МАКСИМАЛЬНЫЕ ЗНАЧЕНИЯ</h3>
+            <div class="grid grid-cols-1 gap-1 text-xs text-zinc-400">
+                <div class="flex justify-between">
+                    <span>Конвейер:</span>
+                    <span class="text-green-400 font-mono">60 Гц (21.0 м/мин)</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Прижимная лента:</span>
+                    <span class="text-green-400 font-mono">90 Гц (20.0 м/мин)</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Обкатчик:</span>
+                    <span class="text-green-400 font-mono">60 Гц (28.0 м/мин)</span>
+                </div>
             </div>
         </div>
         
-        <div id="round-bottle-params" class="form-group-labeling hidden">
-            <div class="border-t border-amber-800 pt-3 mt-2">
-                <p class="text-xs text-amber-400 font-bold mb-2">📐 Параметры обкаточного ремня:</p>
-                
-                <label class="block text-xs font-bold text-zinc-400 mb-1">Диаметр флакона (мм):</label>
-                <input id="bottle-diameter" type="number" step="1" value="75" min="20" max="200" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-center font-mono text-green-400 focus:outline-none">
-                
-                <label class="block text-xs font-bold text-zinc-400 mb-1 mt-3">Длина этикетки (мм):</label>
-                <input id="label-length" type="number" step="1" value="180" min="50" max="500" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-center font-mono text-green-400 focus:outline-none">
-                
-                <label class="block text-xs font-bold text-zinc-400 mb-1 mt-3">Диаметр приводного ролика (мм):</label>
-                <input id="roller-diameter" type="number" step="1" value="50" min="20" max="150" class="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-center font-mono text-green-400 focus:outline-none">
-            </div>
+        <!-- Кнопки -->
+        <div class="flex gap-2 pt-2">
+            <button onclick="resetLabelerForm()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 rounded text-xs uppercase tracking-wider transition cursor-pointer">
+                🔄 Сбросить
+            </button>
         </div>
         
-        <button onclick="generateTechCard()" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-black py-3 rounded text-sm uppercase tracking-wider transition active:scale-95 cursor-pointer">
-            Сформировать Техкарту ПЛК
-        </button>
-    </div>
-
-    <div id="tech-card-result" class="hidden mt-4 bg-zinc-900 border-2 border-dashed border-zinc-800 rounded-lg p-4 space-y-4" style="position: relative; z-index: 1;">
-        <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-            <span class="text-xs font-mono text-zinc-600">ID_RECIPE: AUTO_GEN</span>
-            <span class="text-xs font-bold text-green-400">● РАСЧЕТ ВЫПОЛНЕН</span>
-        </div>
-        <div class="space-y-2">
-            <h3 class="text-xs font-black text-amber-500 uppercase tracking-wider">🔧 1. Механическая переналадка Arsanmak</h3>
-            <ul id="mech-instructions" class="text-xs text-zinc-400 space-y-1.5 list-disc pl-4 font-mono"></ul>
-        </div>
-        <div class="space-y-2 pt-2 border-t border-zinc-900">
-            <h3 class="text-xs font-black text-amber-500 uppercase tracking-wider">⚙ 2. Настройка параметров Herma</h3>
-            <ul id="herma-instructions" class="text-xs text-zinc-400 space-y-1.5 list-disc pl-4 font-mono"></ul>
+        <!-- Рекомендация -->
+        <div class="bg-zinc-800 border border-amber-800 rounded-lg p-3 text-center">
+            <span class="text-xs text-zinc-400">💡 Рекомендация:</span>
+            <span class="text-xs text-green-400 font-bold block mt-1">Установите на панели HERMA указанные частоты</span>
         </div>
     </div>
 </div>
