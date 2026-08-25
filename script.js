@@ -399,7 +399,6 @@ function calculateLabelerFrequencies() {
     const speed = parseFloat(speedInput.value) || 0;
     
     if (speed <= 0) {
-        // Если скорость 0 или отрицательная, показываем прочерки
         document.getElementById('labeler-conveyor-freq').textContent = '—';
         document.getElementById('labeler-press-freq').textContent = '—';
         document.getElementById('labeler-roller-freq').textContent = '—';
@@ -410,22 +409,18 @@ function calculateLabelerFrequencies() {
         return;
     }
     
-    // Расчет частот
     const conveyorFreq = speed * LABELER_COEFFICIENTS.conveyor;
     const pressFreq = speed * LABELER_COEFFICIENTS.press;
     const rollerFreq = speed * LABELER_COEFFICIENTS.roller;
     
-    // Отображение частот
     document.getElementById('labeler-conveyor-freq').textContent = conveyorFreq.toFixed(1);
     document.getElementById('labeler-press-freq').textContent = pressFreq.toFixed(1);
     document.getElementById('labeler-roller-freq').textContent = rollerFreq.toFixed(1);
     
-    // Расчет процентов для полос прогресса
     const conveyorPercent = Math.min((conveyorFreq / LABELER_MAX.conveyor.freq) * 100, 100);
     const pressPercent = Math.min((pressFreq / LABELER_MAX.press.freq) * 100, 100);
     const rollerPercent = Math.min((rollerFreq / LABELER_MAX.roller.freq) * 100, 100);
     
-    // Обновление полос прогресса с цветовой индикацией
     updateProgressBar('labeler-conveyor-bar', conveyorPercent, LABELER_MAX.conveyor.freq, conveyorFreq);
     updateProgressBar('labeler-press-bar', pressPercent, LABELER_MAX.press.freq, pressFreq);
     updateProgressBar('labeler-roller-bar', rollerPercent, LABELER_MAX.roller.freq, rollerFreq);
@@ -435,7 +430,6 @@ function updateProgressBar(barId, percent, maxFreq, currentFreq) {
     const bar = document.getElementById(barId);
     bar.style.width = Math.min(percent, 100) + '%';
     
-    // Цветовая индикация
     const ratio = currentFreq / maxFreq;
     if (ratio >= 0.95) {
         bar.className = 'h-1.5 rounded-full transition-all duration-300 bg-red-500';
@@ -453,7 +447,135 @@ function resetLabelerForm() {
 }
 
 // ============================================================
-// 4. УПРАВЛЕНИЕ ТИПОМ УКУПОРКИ
+// 4. НАСТРОЙКА УГЛА НОЖА (ИНКЛИНОМЕТР)
+// ============================================================
+
+function updateKnifeInstructions() {
+    const bottleType = document.getElementById('knife-bottle-type').value;
+    const wallAngle = parseFloat(document.getElementById('knife-wall-angle').value) || 0;
+    const roundingAngle = parseFloat(document.getElementById('knife-rounding-angle').value) || 0;
+    
+    const container = document.getElementById('knife-instructions');
+    const recommendationBlock = document.getElementById('knife-recommendation');
+    const recommendationText = document.getElementById('knife-recommendation-text');
+    
+    // Показываем/скрываем поле скругления (только для пузатых и круглых)
+    const roundingBlock = document.getElementById('knife-rounding-block');
+    const hasRounding = (bottleType === 'belly' || bottleType === 'round');
+    if (hasRounding) {
+        roundingBlock.classList.remove('hidden');
+    } else {
+        roundingBlock.classList.add('hidden');
+    }
+    
+    let html = '';
+    
+    // === ПОПЕРЕЧНАЯ КАЛИБРОВКА (для ВСЕХ флаконов) ===
+    html += `<div class="knife-section-title">📐 ПОПЕРЕЧНАЯ КАЛИБРОВКА (угол стенки)</div>`;
+    
+    html += `<div class="step-item">
+        <span class="step-number">1</span>
+        <span class="step-text"><strong>Инклинометр на конвейере поперек движения</strong> → <span class="step-highlight">ОБНУЛИТЬ</span> (конвейер остановлен)</span>
+    </div>`;
+    
+    // Шаг 2: замер угла стенки (для ВСЕХ флаконов)
+    html += `<div class="step-item step-active">
+        <span class="step-number">2</span>
+        <span class="step-text"><strong>Флакон под прижимом</strong> → замер наклона стенки по центру: <span class="step-highlight">${wallAngle.toFixed(1)}°</span></span>
+    </div>`;
+    
+    if (wallAngle === 0) {
+        html += `<div class="step-item step-done">
+            <span class="step-number">💡</span>
+            <span class="step-text">Угол стенки = 0° — флакон перпендикулярен конвейеру. Настройка не требуется.</span>
+        </div>`;
+    }
+    
+    html += `<div class="step-item">
+        <span class="step-number">3</span>
+        <span class="step-text"><strong>Перенести угол ${wallAngle.toFixed(1)}°</strong> на соответствующий нож</span>
+    </div>`;
+    
+    html += `<div class="step-item">
+        <span class="step-number">4</span>
+        <span class="step-text"><strong>Повторить процедуру</strong> для <span class="step-highlight">противоположной стороны</span></span>
+    </div>`;
+    
+    // === ПРОДОЛЬНАЯ КАЛИБРОВКА (для ВСЕХ флаконов) ===
+    html += `<div class="knife-section-title">➡️ ПРОДОЛЬНАЯ КАЛИБРОВКА (параллельность конвейеру)</div>`;
+    
+    html += `<div class="step-item">
+        <span class="step-number">5</span>
+        <span class="step-text"><strong>Инклинометр вдоль движения конвейера</strong> → <span class="step-highlight">ОБНУЛИТЬ</span></span>
+    </div>`;
+    
+    html += `<div class="step-item">
+        <span class="step-number">6</span>
+        <span class="step-text"><strong>Инклинометр к торцу ножа</strong> → выставить <span class="step-highlight">0°</span></span>
+    </div>`;
+    
+    html += `<div class="step-item">
+        <span class="step-number">7</span>
+        <span class="step-text"><strong>Повторить процедуру</strong> для <span class="step-highlight">противоположной стороны</span></span>
+    </div>`;
+    
+    // === СКРУГЛЕНИЕ (только для пузатых и круглых) ===
+    if (hasRounding) {
+        html += `<div class="knife-section-title">🔄 СКРУГЛЕНИЕ (для флаконов со скруглением)</div>`;
+        
+        html += `<div class="step-item step-active">
+            <span class="step-number">8</span>
+            <span class="step-text"><strong>Замер угла скругления транспортиром</strong> → <span class="step-highlight">${roundingAngle.toFixed(1)}°</span> → перенести на <strong>поворот ножа</strong></span>
+        </div>`;
+        
+        html += `<div class="step-item">
+            <span class="step-number">9</span>
+            <span class="step-text"><strong>Расстояние от ножа до флакона</strong> в самой широкой части <span class="step-highlight">≤ 5 мм</span> (по горизонтали)</span>
+        </div>`;
+        
+        html += `<div class="step-item">
+            <span class="step-number">10</span>
+            <span class="step-text"><strong>Вылет (язык) этикетки</strong> = расстояние между ножом и <span class="step-highlight">самой узкой частью стенки</span> флакона (на обеих сторонах)</span>
+        </div>`;
+        html += `<div class="step-item" style="border-left-color: #06b6d4; background-color: rgba(6, 182, 212, 0.05);">
+            <span class="step-number" style="color: #06b6d4;">💡</span>
+            <span class="step-text" style="color: #67e8f9;">Чтобы передний край этикетки ложился строго в нужное место с учетом скругления</span>
+        </div>`;
+    }
+    
+    // === РЕКОМЕНДАЦИЯ ===
+    let recommendation = '';
+    
+    if (wallAngle > 0) {
+        recommendation = `Установите нож под углом ${wallAngle.toFixed(1)}° (поперечная калибровка) и 0° (продольная калибровка)`;
+        if (hasRounding && roundingAngle > 0) {
+            recommendation += `, поворот ножа на ${roundingAngle.toFixed(1)}° для скругления`;
+        }
+    } else if (hasRounding && roundingAngle > 0) {
+        recommendation = `Поворот ножа на ${roundingAngle.toFixed(1)}° для скругления. Зазор ≤ 5 мм.`;
+    } else {
+        recommendation = 'Нож параллелен конвейеру в двух плоскостях. Настройка выполнена!';
+    }
+    
+    recommendationText.textContent = recommendation;
+    recommendationBlock.classList.add('show');
+    
+    container.innerHTML = html;
+}
+
+function checkKnifeAngles() {
+    updateKnifeInstructions();
+}
+
+function resetKnifeForm() {
+    document.getElementById('knife-bottle-type').value = 'flat';
+    document.getElementById('knife-wall-angle').value = '0.0';
+    document.getElementById('knife-rounding-angle').value = '0.0';
+    updateKnifeInstructions();
+}
+
+// ============================================================
+// 5. УПРАВЛЕНИЕ ТИПОМ УКУПОРКИ
 // ============================================================
 
 let selectedCapType = 'cap';
@@ -473,7 +595,7 @@ function selectCappingType(type) {
 }
 
 // ============================================================
-// 5. МАТЕМАТИЧЕСКАЯ МОДЕЛЬ УКУПОРА KV 30
+// 6. МАТЕМАТИЧЕСКАЯ МОДЕЛЬ УКУПОРА KV 30
 // ============================================================
 
 function calculateCappingParams() {
@@ -548,8 +670,7 @@ function calculateCappingParams() {
 }
 
 // ============================================================
-// 6. ОТОБРАЖЕНИЕ РЕЗУЛЬТАТА УКУПОРА
-// ============================================================
+// 7. ОТОБРАЖЕНИЕ РЕЗУЛЬТАТА УКУПОРА// ============================================================
 
 function displayCappingResult(params) {
     const resultBlock = document.getElementById('capping-result');
@@ -631,7 +752,7 @@ function displayCappingResult(params) {
 }
 
 // ============================================================
-// 7. КОПИРОВАНИЕ ПАРАМЕТРОВ
+// 8. КОПИРОВАНИЕ ПАРАМЕТРОВ
 // ============================================================
 
 function copyCappingParams() {
@@ -651,7 +772,7 @@ function copyCappingParams() {
 }
 
 // ============================================================
-// 8. СБРОС ФОРМЫ УКУПОРА
+// 9. СБРОС ФОРМЫ УКУПОРА
 // ============================================================
 
 function resetCappingForm() {
@@ -665,13 +786,14 @@ function resetCappingForm() {
 }
 
 // ============================================================
-// 9. ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+// 10. ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
 // ============================================================
 
 window.onload = function() {
     runUniversalCalculation();
     switchTab('filling');
     calculateLabelerFrequencies();
+    updateKnifeInstructions();
     
     console.log('✅ Delta PLC Mobile Assistant загружен');
 };
