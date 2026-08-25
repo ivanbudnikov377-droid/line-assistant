@@ -293,7 +293,7 @@ function runUniversalCalculation() {
     // === 14. ФОРМИРОВАНИЕ ЗНАЧЕНИЯ ДЛЯ 2-Й СКОРОСТИ НАСОСА ===
     let pumpSpeed2Display;
     if (visc > 1000) {
-        const topPourSpeed = speed2 * 0.88; // верхний налив на 12% меньше
+        const topPourSpeed = speed2 * 0.88;
         pumpSpeed2Display = "(ВЕРХН.) " + topPourSpeed.toFixed(2) + "  (ДОН.) " + speed2.toFixed(2);
     } else {
         pumpSpeed2Display = speed2.toFixed(2);
@@ -334,7 +334,7 @@ function runUniversalCalculation() {
 
     const badge = document.getElementById('sub_conveyor_stop_badge');
     if (badge) {
-        badge.textContent = stopConv ? "ЗАПУСТИТЬ (ОСТАНОВКА АКТИВНА)" : "ОСТАНОВИТЬ (ХОД НЕПРЕРЫВЕН)";
+        badge.textContent = stopConv ? "ЗАПУСТИТЬ (ОСТАНОВ АКТИВЕН)" : "ОСТАНОВИТЬ (ХОД НЕПРЕРЫВЕН)";
         badge.className = stopConv ? "status-badge badge-top-active" : "status-badge badge-stop-disabled";
     }
 
@@ -377,32 +377,79 @@ function switchTab(tabName) {
 }
 
 // ============================================================
-// 3. УПРАВЛЕНИЕ ПОЛЯМИ ВВОДА (ЭТИКЕТКА)
+// 3. КАЛЬКУЛЯТОР ЭТИКЕТОВЩИКА
 // ============================================================
 
-function toggleConeInput() {
-    const bottleType = document.getElementById('bottle-type').value;
-    const coneBlock = document.getElementById('cone-angle-block');
-    const bellyParams = document.getElementById('belly-params');
-    const roundParams = document.getElementById('round-bottle-params');
+// Коэффициенты для пересчета скорости в частоту (универсальные для всех линий)
+const LABELER_COEFFICIENTS = {
+    conveyor: 2.86,
+    press: 4.55,
+    roller: 2.14
+};
+
+// Максимальные значения
+const LABELER_MAX = {
+    conveyor: { freq: 60, speed: 21.0 },
+    press: { freq: 90, speed: 20.0 },
+    roller: { freq: 60, speed: 28.0 }
+};
+
+function calculateLabelerFrequencies() {
+    const speedInput = document.getElementById('conveyor-speed-input');
+    const speed = parseFloat(speedInput.value) || 0;
     
-    if (bottleType === 'cone') {
-        coneBlock.classList.remove('hidden');
-    } else {
-        coneBlock.classList.add('hidden');
+    if (speed <= 0) {
+        // Если скорость 0 или отрицательная, показываем прочерки
+        document.getElementById('labeler-conveyor-freq').textContent = '—';
+        document.getElementById('labeler-press-freq').textContent = '—';
+        document.getElementById('labeler-roller-freq').textContent = '—';
+        
+        document.getElementById('labeler-conveyor-bar').style.width = '0%';
+        document.getElementById('labeler-press-bar').style.width = '0%';
+        document.getElementById('labeler-roller-bar').style.width = '0%';
+        return;
     }
     
-    if (bottleType === 'belly') {
-        bellyParams.classList.remove('hidden');
-    } else {
-        bellyParams.classList.add('hidden');
-    }
+    // Расчет частот
+    const conveyorFreq = speed * LABELER_COEFFICIENTS.conveyor;
+    const pressFreq = speed * LABELER_COEFFICIENTS.press;
+    const rollerFreq = speed * LABELER_COEFFICIENTS.roller;
     
-    if (bottleType === 'round') {
-        roundParams.classList.remove('hidden');
+    // Отображение частот
+    document.getElementById('labeler-conveyor-freq').textContent = conveyorFreq.toFixed(1);
+    document.getElementById('labeler-press-freq').textContent = pressFreq.toFixed(1);
+    document.getElementById('labeler-roller-freq').textContent = rollerFreq.toFixed(1);
+    
+    // Расчет процентов для полос прогресса
+    const conveyorPercent = Math.min((conveyorFreq / LABELER_MAX.conveyor.freq) * 100, 100);
+    const pressPercent = Math.min((pressFreq / LABELER_MAX.press.freq) * 100, 100);
+    const rollerPercent = Math.min((rollerFreq / LABELER_MAX.roller.freq) * 100, 100);
+    
+    // Обновление полос прогресса с цветовой индикацией
+    updateProgressBar('labeler-conveyor-bar', conveyorPercent, LABELER_MAX.conveyor.freq, conveyorFreq);
+    updateProgressBar('labeler-press-bar', pressPercent, LABELER_MAX.press.freq, pressFreq);
+    updateProgressBar('labeler-roller-bar', rollerPercent, LABELER_MAX.roller.freq, rollerFreq);
+}
+
+function updateProgressBar(barId, percent, maxFreq, currentFreq) {
+    const bar = document.getElementById(barId);
+    bar.style.width = Math.min(percent, 100) + '%';
+    
+    // Цветовая индикация
+    const ratio = currentFreq / maxFreq;
+    if (ratio >= 0.95) {
+        bar.className = 'h-1.5 rounded-full transition-all duration-300 bg-red-500';
+    } else if (ratio >= 0.80) {
+        bar.className = 'h-1.5 rounded-full transition-all duration-300 bg-yellow-500';
     } else {
-        roundParams.classList.add('hidden');
+        bar.className = 'h-1.5 rounded-full transition-all duration-300 bg-green-500';
     }
+}
+
+function resetLabelerForm() {
+    document.getElementById('conveyor-speed-input').value = '14.0';
+    document.getElementById('labelerLineSelect').value = 'LINE_1_3';
+    calculateLabelerFrequencies();
 }
 
 // ============================================================
@@ -618,518 +665,13 @@ function resetCappingForm() {
 }
 
 // ============================================================
-// 9. РАСЧЕТ УГЛА НОЖА (ИНКЛИНОМЕТР)
-// ============================================================
-
-function calculateKnifeAngle(bottleType, wallAngle, bellyCurvature, bottleHeight, labelHeight) {
-    let knifeAngle = 0;
-    let tiltAngle = 0;
-    let formula = '';
-    let description = '';
-    let measurementMethod = '';
-    let inclinometerSteps = [];
-
-    switch(bottleType) {
-        case 'flat':
-            knifeAngle = 0;
-            tiltAngle = 0;
-            formula = 'α = 0° (параллельно конвейеру)';
-            description = 'Нож устанавливается параллельно плоскости конвейера';
-            measurementMethod = 'Инклинометр на плоскости ножа: 0° | На торце ножа: 0°';
-            inclinometerSteps = [
-                '📐 ШАГ 1: Откалибруйте инклинометр на конвейере (экраном по движению) → ZERO',
-                '📐 ШАГ 2: Приложите инклинометр к плоской стенке флакона → убедитесь, что угол = 0.0°',
-                '📐 ШАГ 3: Установите инклинометр на плоскость ножа (широкая сторона) → выставьте 0.0°',
-                '📐 ШАГ 4: Откалибруйте инклинометр на конвейере (экраном 90° к движению) → ZERO',
-                '📐 ШАГ 5: Установите инклинометр на ТОРЕЦ ножа (ребро) → выставьте 0.0°',
-                '✅ Результат: Нож параллелен конвейеру в двух плоскостях'
-            ];
-            break;
-
-        case 'cone':
-            knifeAngle = wallAngle;
-            tiltAngle = wallAngle;
-            formula = `α = β = ${wallAngle}° (угол стенки флакона)`;
-            description = `Нож наклоняется параллельно стенке конуса (${wallAngle}°)`;
-            measurementMethod = `Инклинометр на плоскости ножа: ${wallAngle}° | На торце ножа: 0°`;
-            inclinometerSteps = [
-                '📐 ШАГ 1: Откалибруйте инклинометр на конвейере (экраном по движению) → ZERO',
-                '📐 ШАГ 2: Приложите инклинометр к стенке флакона → зафиксируйте угол β',
-                `📐 ШАГ 3: Установите инклинометр на плоскость ножа (широкая сторона) → выставьте ${wallAngle}°`,
-                '📐 ШАГ 4: Откалибруйте инклинометр на конвейере (экраном 90° к движению) → ZERO',
-                '📐 ШАГ 5: Установите инклинометр на ТОРЕЦ ножа (ребро) → выставьте 0.0°',
-                `✅ Результат: Нож параллелен стенке флакона (${wallAngle}°) и конвейеру (0°)`
-            ];
-            break;
-
-        case 'belly':
-            const curvatureRadius = 50 + (1 - bellyCurvature) * 100;
-            const halfLabelHeight = labelHeight / 2;
-            const tanAngle = curvatureRadius / halfLabelHeight;
-            knifeAngle = Math.atan(tanAngle) * (180 / Math.PI);
-            knifeAngle = Math.min(knifeAngle, 30);
-            const bellyFactor = 0.5 + (bellyCurvature * 0.5);
-            tiltAngle = knifeAngle * bellyFactor;
-            formula = `α = arctan(R_кривизны / (H_этикетки/2)) = ${knifeAngle.toFixed(1)}°`;
-            description = `Нож наклоняется для贴合 пузатой поверхности (${knifeAngle.toFixed(1)}°)`;
-            measurementMethod = `Инклинометр на плоскости ножа: ${knifeAngle.toFixed(1)}° | На торце ножа: 0°`;
-            inclinometerSteps = [
-                '📐 ШАГ 1: Откалибруйте инклинометр на конвейере (экраном по движению) → ZERO',
-                '📐 ШАГ 2: Замерьте кривизну пуза (визуально или шаблоном)',
-                `📐 ШАГ 3: Установите инклинометр на плоскость ножа (широкая сторона) → выставьте ${knifeAngle.toFixed(1)}°`,
-                '📐 ШАГ 4: Откалибруйте инклинометр на конвейере (экраном 90° к движению) → ZERO',
-                '📐 ШАГ 5: Установите инклинометр на ТОРЕЦ ножа (ребро) → выставьте 0.0°',
-                `✅ Результат: Нож贴合 пузатой поверхности (${knifeAngle.toFixed(1)}°) и параллелен конвейеру`
-            ];
-            break;
-
-        case 'round':
-            knifeAngle = 0;
-            tiltAngle = 0;
-            formula = 'α = 0° (перпендикулярно поверхности)';
-            description = 'Нож перпендикулярен поверхности круглого флакона';
-            measurementMethod = 'Инклинометр на плоскости ножа: 0° | На торце ножа: 0°';
-            inclinometerSteps = [
-                '📐 ШАГ 1: Откалибруйте инклинометр на конвейере (экраном по движению) → ZERO',
-                '📐 ШАГ 2: Приложите инклинометр к поверхности круглого флакона → убедитесь, что угол = 0.0°',
-                '📐 ШАГ 3: Установите инклинометр на плоскость ножа (широкая сторона) → выставьте 0.0°',
-                '📐 ШАГ 4: Откалибруйте инклинометр на конвейере (экраном 90° к движению) → ZERO',
-                '📐 ШАГ 5: Установите инклинометр на ТОРЕЦ ножа (ребро) → выставьте 0.0°',
-                '✅ Результат: Нож перпендикулярен поверхности флакона и параллелен конвейеру'
-            ];
-            break;
-
-        default:
-            knifeAngle = 0;
-            formula = 'α = 0° (стандартный)';
-            description = 'Стандартная установка';
-            measurementMethod = 'Проверить инклинометром';
-            inclinometerSteps = [
-                '📐 ШАГ 1: Откалибруйте инклинометр на конвейере → ZERO',
-                '📐 ШАГ 2: Установите на плоскость ножа → выставьте 0°',
-                '📐 ШАГ 3: Откалибруйте инклинометр на конвейере (90°) → ZERO',
-                '📐 ШАГ 4: Установите на торец ножа → выставьте 0°',
-                '✅ Результат: Нож настроен'
-            ];
-    }
-
-    return {
-        knifeAngle: knifeAngle,
-        knifeAngleDisplay: knifeAngle.toFixed(1),
-        tiltAngle: tiltAngle,
-        tiltAngleDisplay: tiltAngle.toFixed(1),
-        formula: formula,
-        description: description,
-        measurementMethod: measurementMethod,
-        inclinometerSteps: inclinometerSteps,
-        recommendation: generateKnifeRecommendation(bottleType, wallAngle, knifeAngle)
-    };
-}
-
-function generateKnifeRecommendation(bottleType, wallAngle, knifeAngle) {
-    switch(bottleType) {
-        case 'flat': 
-            return 'Плоскость ножа: 0° (как на флаконе) | Торец ножа: 0° (параллельно конвейеру)';
-        case 'cone': 
-            return `Плоскость ножа: ${wallAngle}° (как на флаконе) | Торец ножа: 0° (параллельно конвейеру)`;
-        case 'belly': 
-            return `Плоскость ножа: ${knifeAngle.toFixed(1)}° | Торец ножа: 0° (параллельно конвейеру)`;
-        case 'round': 
-            return 'Плоскость ножа: 0° (как на флаконе) | Торец ножа: 0° (параллельно конвейеру)';
-        default: 
-            return 'Стандартная установка. Проверить инклинометром.';
-    }
-}
-
-// ============================================================
-// 10. МАТЕМАТИЧЕСКАЯ МОДЕЛЬ ЭТИКЕРОВЩИКА
-// ============================================================
-
-function calculateLabelerParams(conveyorSpeedMs, bottleType, labelMaterial, params) {
-    const K_mat = (labelMaterial === 'paper') ? 1.04 : 1.0;
-    const conveyorSpeedMmin = conveyorSpeedMs * 60;
-    const V_disp = conveyorSpeedMmin * K_mat;
-    
-    const pressureMap = {
-        'flat': 1.0,
-        'cone': 1.2,
-        'belly': 0.8,
-        'round': null
-    };
-    
-    let result = {
-        conveyorSpeedMs: conveyorSpeedMs,
-        conveyorSpeedMmin: conveyorSpeedMmin,
-        conveyorSpeedMs_display: conveyorSpeedMs.toFixed(2) + ' м/с',
-        conveyorSpeedMmin_display: conveyorSpeedMmin.toFixed(1) + ' м/мин',
-        material: labelMaterial,
-        K_mat: K_mat,
-        bottleType: bottleType,
-        V_disp: V_disp,
-        V_disp_display: V_disp.toFixed(1) + ' м/мин',
-        usedEquipment: '',
-        V_belt: null,
-        V_belt_display: null,
-        V_roller: null,
-        V_roller_display: null,
-        omega_drive: null,
-        omega_drive_display: null,
-        omega_bottle: null,
-        omega_bottle_display: null,
-        P: null,
-        P_display: null,
-        speedRatio: null,
-        D_bottle: null,
-        D_drive: null,
-        labelLength: null,
-        bottleRevolutions: null,
-        bottleRevolutions_display: null,
-        cycleTime: null,
-        cycleTime_display: null,
-        slipFactor: null,
-        recommendation: '',
-        formula: ''
-    };
-    
-    if (bottleType === 'round') {
-        const D_bottle = params.bottleDiameter || 75;
-        const D_drive = params.driveRollerDiameter || 50;
-        const labelLength = params.labelLength || 180;
-        
-        const V_roller = conveyorSpeedMmin * K_mat * (D_bottle / D_drive);
-        const omega_drive = (V_roller * 1000) / (Math.PI * D_drive);
-        const omega_bottle = (V_disp * 60) / (Math.PI * D_bottle);
-        const bottleRevolutions = labelLength / (Math.PI * D_bottle);
-        const labelLength_m = labelLength / 1000;
-        const cycleTime = labelLength_m / (V_disp / 60);
-        const slipFactor = (labelMaterial === 'paper') ? 1.0 : 0.98;
-        const K_pressure_roller = (labelMaterial === 'paper') ? 1.2 : 0.8;
-        const P = (V_roller / 10) * K_pressure_roller;
-        
-        result.usedEquipment = 'обкаточный ремень';
-        result.V_roller = V_roller;
-        result.V_roller_display = V_roller.toFixed(1) + ' м/мин';
-        result.omega_drive = omega_drive;
-        result.omega_drive_display = omega_drive.toFixed(0) + ' об/мин';
-        result.omega_bottle = omega_bottle;
-        result.omega_bottle_display = omega_bottle.toFixed(1) + ' об/мин';
-        result.P = P;
-        result.P_display = P.toFixed(1);
-        result.speedRatio = (D_bottle / D_drive).toFixed(3);
-        result.D_bottle = D_bottle;
-        result.D_drive = D_drive;
-        result.labelLength = labelLength;
-        result.bottleRevolutions = bottleRevolutions;
-        result.bottleRevolutions_display = bottleRevolutions.toFixed(2) + ' об.';
-        result.cycleTime = cycleTime;
-        result.cycleTime_display = cycleTime.toFixed(2) + ' сек';
-        result.slipFactor = slipFactor;
-        result.formula = `V_ремня = ${conveyorSpeedMmin.toFixed(1)} × ${K_mat.toFixed(2)} × (${D_bottle}/${D_drive}) = ${V_roller.toFixed(1)} м/мин`;
-        result.recommendation = `Обкаточный ремень: скорость ${V_roller.toFixed(1)} м/мин. Флакон вращается со скоростью ${omega_bottle.toFixed(1)} об/мин. За цикл (${cycleTime.toFixed(2)} сек) флакон делает ${bottleRevolutions.toFixed(2)} оборота.`;
-        
-    } else {
-        const V_belt = conveyorSpeedMmin * K_mat;
-        const K_pressure = pressureMap[bottleType] || 1.0;
-        const P = (conveyorSpeedMmin / 10) * K_pressure;
-        
-        result.usedEquipment = 'прижимной ремень';
-        result.V_belt = V_belt;
-        result.V_belt_display = V_belt.toFixed(1) + ' м/мин';
-        result.V_roller = V_belt;
-        result.V_roller_display = V_belt.toFixed(1) + ' м/мин (прижимной ремень)';
-        result.P = P;
-        result.P_display = P.toFixed(1);
-        result.speedRatio = '1:1';
-        result.formula = `V_ремня = ${conveyorSpeedMmin.toFixed(1)} × ${K_mat.toFixed(2)} = ${V_belt.toFixed(1)} м/мин`;
-        
-        let typeNote = '';
-        if (bottleType === 'flat') typeNote = 'плоский';
-        else if (bottleType === 'cone') typeNote = 'конусный';
-        else if (bottleType === 'belly') typeNote = 'пузатый';
-        
-        result.recommendation = `Прижимной ремень для ${typeNote} флакона. Скорость ремня = ${V_belt.toFixed(1)} м/мин.`;
-    }
-    
-    return result;
-}
-
-// ============================================================
-// 11. ГЕНЕРАЦИЯ ТЕХКАРТЫ (ЭТИКЕТКА)
-// ============================================================
-
-function generateTechCard() {
-    const bottleType = document.getElementById('bottle-type').value;
-    const labelMaterial = document.getElementById('label-material').value;
-    const conveyorSpeed = parseFloat(document.getElementById('conveyor-speed').value) || 0;
-    const wallAngle = parseFloat(document.getElementById('bottle-wall-angle').value) || 0;
-    const bottleHeight = parseFloat(document.getElementById('bottle-height').value) || 200;
-    const labelHeight = parseFloat(document.getElementById('label-height').value) || 100;
-    const bellyCurvature = parseFloat(document.getElementById('belly-curvature').value) || 0.5;
-
-    const mechList = document.getElementById('mech-instructions');
-    const hermaList = document.getElementById('herma-instructions');
-    const resultBlock = document.getElementById('tech-card-result');
-
-    mechList.innerHTML = '';
-    hermaList.innerHTML = '';
-
-    const knifeParams = calculateKnifeAngle(bottleType, wallAngle, bellyCurvature, bottleHeight, labelHeight);
-
-    let extraParams = {};
-    if (bottleType === 'round') {
-        extraParams.bottleDiameter = parseFloat(document.getElementById('bottle-diameter').value) || 75;
-        extraParams.driveRollerDiameter = parseFloat(document.getElementById('roller-diameter').value) || 50;
-        extraParams.labelLength = parseFloat(document.getElementById('label-length').value) || 180;
-    }
-    
-    const labelerParams = calculateLabelerParams(conveyorSpeed, bottleType, labelMaterial, extraParams);
-
-    mechList.innerHTML += `<li class="text-amber-400 font-bold">📐 НАСТРОЙКА УГЛА НОЖА (ИНКЛИНОМЕТР):</li>`;
-    mechList.innerHTML += `<li><b>Тип флакона:</b> ${getBottleTypeName(bottleType)}</li>`;
-    mechList.innerHTML += `<li><b>Угол стенки флакона (инклинометр):</b> <span class="text-amber-400 font-bold">${wallAngle.toFixed(1)}°</span></li>`;
-    mechList.innerHTML += `<li><b>Целевой угол (плоскость ножа):</b> <span class="text-green-400 font-bold">${knifeParams.knifeAngleDisplay}°</span> (РАВЕН УГЛУ СТЕНКИ ФЛАКОНА)</li>`;
-    mechList.innerHTML += `<li><b>Целевой угол (торец ножа):</b> <span class="text-green-400 font-bold">0.0°</span> (ПАРАЛЛЕЛЬНО КОНВЕЙЕРУ)</li>`;
-    mechList.innerHTML += `<li><b>Формула:</b> ${knifeParams.formula}</li>`;
-    mechList.innerHTML += `<li><b>Метод измерения:</b> ${knifeParams.measurementMethod}</li>`;
-    mechList.innerHTML += `<li><b>Рекомендация:</b> ${knifeParams.recommendation}</li>`;
-    
-    mechList.innerHTML += `<li class="text-amber-400 font-bold mt-2">📋 ПОШАГОВАЯ ИНСТРУКЦИЯ (ИНКЛИНОМЕТР):</li>`;
-    mechList.innerHTML += `<li class="text-green-400 font-bold">🔴 ГЛАВНЫЕ ПРАВИЛА:</li>`;
-    mechList.innerHTML += `<li class="text-green-400">1. Плоскость ножа = углу стенки флакона (${knifeParams.knifeAngleDisplay})</li>`;
-    mechList.innerHTML += `<li class="text-green-400">2. Торец ножа = 0° (параллельно продольной плоскости конвейера)</li>`;
-    knifeParams.inclinometerSteps.forEach(step => {
-        mechList.innerHTML += `<li class="text-zinc-300">${step}</li>`;
-    });
-    mechList.innerHTML += `<li class="text-green-400 font-bold">✅ ИТОГ: Нож настроен в двух плоскостях! Плоскость = ${knifeParams.knifeAngleDisplay}, Торец = 0.0°</li>`;
-    
-    mechList.innerHTML += `<li class="text-amber-400 font-bold mt-2">🔧 НАСТРОЙКА ОСНАСТКИ:</li>`;
-    
-    if (bottleType === 'round') {
-        mechList.innerHTML += `<li><b>Тип оснастки:</b> ОБКАТОЧНЫЙ РЕМЕНЬ (широкий ремень)</li>`;
-        mechList.innerHTML += `<li><b>Назначение:</b> Вращает флакон вокруг своей оси во время выдачи этикетки</li>`;
-        mechList.innerHTML += `<li><b>Прижимной ремень:</b> ДЕМОНТИРОВАН</li>`;
-        mechList.innerHTML += `<li><b>Диаметр флакона:</b> ${labelerParams.D_bottle} мм</li>`;
-        mechList.innerHTML += `<li><b>Диаметр приводного ролика:</b> ${labelerParams.D_drive} мм</li>`;
-        mechList.innerHTML += `<li><b>Длина этикетки:</b> ${labelerParams.labelLength} мм</li>`;
-        mechList.innerHTML += `<li><b>Скорость обкаточного ремня:</b> <span class="text-green-400 font-bold">${labelerParams.V_roller_display}</span></li>`;
-        mechList.innerHTML += `<li><b>Скорость выдачи этикетки:</b> <span class="text-green-400 font-bold">${labelerParams.V_disp_display}</span></li>`;
-        mechList.innerHTML += `<li><b>Формула расчета:</b> ${labelerParams.formula}</li>`;
-        mechList.innerHTML += `<li><b>Соотношение скоростей:</b> V_ремня / V_конв = ${labelerParams.speedRatio}</li>`;
-        mechList.innerHTML += `<li><b>Частота вращения флакона:</b> ${labelerParams.omega_bottle_display}</li>`;
-        mechList.innerHTML += `<li><b>Частота вращения привода:</b> ${labelerParams.omega_drive_display}</li>`;
-        mechList.innerHTML += `<li><b>Обороты флакона за цикл:</b> ${labelerParams.bottleRevolutions_display}</li>`;
-        mechList.innerHTML += `<li><b>Время цикла наклейки:</b> ${labelerParams.cycleTime_display}</li>`;
-        mechList.innerHTML += `<li><b>Проверка:</b> Замерьте скорость ремня тахометром. Целевое значение: <span class="text-green-400 font-bold">${labelerParams.V_roller_display}</span></li>`;
-        mechList.innerHTML += `<li><b>Визуальный контроль:</b> Флакон должен равномерно вращаться без проскальзывания</li>`;
-    } else {
-        mechList.innerHTML += `<li><b>Тип оснастки:</b> ПРИЖИМНОЙ РЕМЕНЬ</li>`;
-        mechList.innerHTML += `<li><b>Скорость ремня:</b> <span class="text-green-400 font-bold">${labelerParams.V_roller_display}</span></li>`;
-        mechList.innerHTML += `<li><b>Формула:</b> ${labelerParams.formula}</li>`;
-        mechList.innerHTML += `<li><b>Рекомендация:</b> ${labelerParams.recommendation}</li>`;
-        
-        if (bottleType === 'flat') {
-            mechList.innerHTML += `<li><b>Углы аппликаторов:</b> Сбросьте наклон на 0° (инклинометр)</li>`;
-        } else if (bottleType === 'cone') {
-            mechList.innerHTML += `<li><b>Углы аппликаторов:</b> Наклоните на ${wallAngle}° (инклинометр)</li>`;
-            mechList.innerHTML += `<li><b>Наклон лопаток:</b> Параллельно конусу (${wallAngle}°)</li>`;
-        } else if (bottleType === 'belly') {
-            mechList.innerHTML += `<li><b>Позиционирование ножа:</b> Зазор не более 2 мм</li>`;
-        }
-    }
-
-    hermaList.innerHTML += `<li><b>Тип датчика:</b> Самообучаемый щелевой датчик (контактный)</li>`;
-    hermaList.innerHTML += `<li><b>ШАГ 1:</b> <span class="text-amber-400 font-bold">ЗАЖМИТЕ</span> кнопку обучения и <span class="text-amber-400 font-bold">УДЕРЖИВАЙТЕ</span> до <span class="text-green-400 font-bold">МОРГАНИЯ</span> индикатора</li>`;
-    hermaList.innerHTML += `<li><b>ШАГ 2:</b> Нажмите <span class="text-amber-400 font-bold">"ВЫДАЧА ЭТИКЕТКИ"</span> и выдайте <span class="text-green-400 font-bold">3-4 этикетки</span></li>`;
-    hermaList.innerHTML += `<li><b>ШАГ 3:</b> Датчик <span class="text-green-400 font-bold">САМООБУЧИЛСЯ</span> — индикатор горит постоянно</li>`;
-    hermaList.innerHTML += `<li><b>Проверка:</b> Подайте 2-3 этикетки для контроля срабатывания</li>`;
-    
-    const materialName = (labelMaterial === 'pp') ? 'ПП' : 'Бумага';
-    hermaList.innerHTML += `<li class="text-green-400"><b>Уставка Dispensing Speed:</b> <span class="underline font-bold">${labelerParams.V_disp_display}</span> (коэффициент материала: ${labelerParams.K_mat.toFixed(2)})</li>`;
-    
-    if (labelMaterial === 'pp') {
-        hermaList.innerHTML += `<li><b>Для ПП:</b> Минимальное натяжение подложки. Вылет этикетки: 1.0-1.5 мм</li>`;
-    } else {
-        hermaList.innerHTML += `<li><b>Для бумаги:</b> Стандартное натяжение. Вылет этикетки: 2.5-3.0 мм</li>`;
-    }
-    
-    hermaList.innerHTML += `<li><b>Обслуживание:</b> При пропусках — повторите самообучение</li>`;
-
-    resultBlock.classList.remove('hidden');
-    resultBlock.scrollIntoView({ behavior: 'smooth' });
-}
-
-// ============================================================
-// 12. ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ
-// ============================================================
-
-function getBottleTypeName(type) {
-    const names = {
-        'flat': 'Прямой плоский',
-        'cone': 'Конусный',
-        'belly': 'Пузатый сферический',
-        'round': 'Круглый'
-    };
-    return names[type] || type;
-}
-
-// ============================================================
-// 13. НАСТРОЙКА УГЛА НОЖА (ИНКЛИНОМЕТР) - ИНТЕРФЕЙС
-// ============================================================
-
-function updateBottleTypeDisplay() {
-    const select = document.getElementById('bottle-type');
-    const display = document.getElementById('display-bottle-type');
-    if (select && display) {
-        const types = {
-            'flat': 'Прямой плоский',
-            'cone': 'Конусный',
-            'belly': 'Пузатый сферический',
-            'round': 'Круглый'
-        };
-        display.textContent = types[select.value] || select.value;
-    }
-}
-
-function calculateTargetAngle() {
-    const bottleType = document.getElementById('bottle-type').value;
-    const wallAngle = parseFloat(document.getElementById('bottle-wall-angle').value) || 0;
-    const bottleHeight = parseFloat(document.getElementById('bottle-height').value) || 200;
-    const labelHeight = parseFloat(document.getElementById('label-height').value) || 100;
-    const bellyCurvature = parseFloat(document.getElementById('belly-curvature').value) || 0.5;
-    
-    let targetAngle = 0;
-    
-    switch(bottleType) {
-        case 'flat':
-            targetAngle = 0;
-            break;
-        case 'cone':
-            targetAngle = wallAngle;
-            break;
-        case 'belly':
-            const curvatureRadius = 50 + (1 - bellyCurvature) * 100;
-            const halfLabelHeight = labelHeight / 2;
-            const tanAngle = curvatureRadius / halfLabelHeight;
-            let calculatedAngle = Math.atan(tanAngle) * (180 / Math.PI);
-            targetAngle = Math.min(calculatedAngle, 30);
-            break;
-        case 'round':
-            targetAngle = 0;
-            break;
-        default:
-            targetAngle = 0;
-    }
-    
-    const targetDisplay = document.getElementById('target-knife-angle');
-    if (targetDisplay) {
-        targetDisplay.textContent = targetAngle.toFixed(1) + '°';
-    }
-    
-    return targetAngle;
-}
-
-function checkKnifeAngles() {
-    updateBottleTypeDisplay();
-    
-    const targetAngle = calculateTargetAngle();
-    const currentAngle = parseFloat(document.getElementById('current-knife-angle').value) || 0;
-    const currentEdge = parseFloat(document.getElementById('current-edge-angle').value) || 0;
-    
-    const diff = targetAngle - currentAngle;
-    const tolerance = 0.5;
-    const hintText = document.getElementById('knife-adjustment-text');
-    const hintBlock = document.getElementById('knife-adjustment-hint');
-    
-    if (Math.abs(diff) <= tolerance) {
-        hintText.textContent = '✅ Угол плоскости ножа настроен правильно!';
-        hintText.className = 'text-green-400 font-bold text-sm block mt-1';
-        hintBlock.className = 'bg-zinc-950 border border-green-700 rounded-lg p-2 text-center';
-    } else if (diff > 0) {
-        hintText.textContent = `⚠️ Поверните нож ВПРАВО на ${diff.toFixed(1)}° (увеличьте угол)`;
-        hintText.className = 'text-amber-400 font-bold text-sm block mt-1';
-        hintBlock.className = 'bg-zinc-950 border border-amber-700 rounded-lg p-2 text-center';
-    } else {
-        hintText.textContent = `⚠️ Поверните нож ВЛЕВО на ${Math.abs(diff).toFixed(1)}° (уменьшите угол)`;
-        hintText.className = 'text-amber-400 font-bold text-sm block mt-1';
-        hintBlock.className = 'bg-zinc-950 border border-amber-700 rounded-lg p-2 text-center';
-    }
-    
-    const edgeHintText = document.getElementById('edge-adjustment-text');
-    const edgeHintBlock = document.getElementById('edge-adjustment-hint');
-    
-    if (Math.abs(currentEdge) <= tolerance) {
-        edgeHintText.textContent = '✅ Торец ножа параллелен конвейеру!';
-        edgeHintText.className = 'text-green-400 font-bold text-sm block mt-1';
-        edgeHintBlock.className = 'bg-zinc-950 border border-green-700 rounded-lg p-2 text-center';
-    } else if (currentEdge > 0) {
-        edgeHintText.textContent = `⚠️ Поверните нож ВПРАВО на ${currentEdge.toFixed(1)}° (относительно движения)`;
-        edgeHintText.className = 'text-amber-400 font-bold text-sm block mt-1';
-        edgeHintBlock.className = 'bg-zinc-950 border border-amber-700 rounded-lg p-2 text-center';
-    } else {
-        edgeHintText.textContent = `⚠️ Поверните нож ВЛЕВО на ${Math.abs(currentEdge).toFixed(1)}° (относительно движения)`;
-        edgeHintText.className = 'text-amber-400 font-bold text-sm block mt-1';
-        edgeHintBlock.className = 'bg-zinc-950 border border-amber-700 rounded-lg p-2 text-center';
-    }
-    
-    document.getElementById('target-knife-angle').textContent = targetAngle.toFixed(1) + '°';
-}
-
-function resetInclinometerFields() {
-    document.getElementById('bottle-wall-angle').value = '0.0';
-    document.getElementById('current-knife-angle').value = '0.0';
-    document.getElementById('current-edge-angle').value = '0.0';
-    
-    const hintText = document.getElementById('knife-adjustment-text');
-    const hintBlock = document.getElementById('knife-adjustment-hint');
-    hintText.textContent = '✅ Угол плоскости ножа настроен правильно!';
-    hintText.className = 'text-green-400 font-bold text-sm block mt-1';
-    hintBlock.className = 'bg-zinc-950 border border-green-700 rounded-lg p-2 text-center';
-    
-    const edgeHintText = document.getElementById('edge-adjustment-text');
-    const edgeHintBlock = document.getElementById('edge-adjustment-hint');
-    edgeHintText.textContent = '✅ Торец ножа параллелен конвейеру!';
-    edgeHintText.className = 'text-green-400 font-bold text-sm block mt-1';
-    edgeHintBlock.className = 'bg-zinc-950 border border-green-700 rounded-lg p-2 text-center';
-    
-    calculateTargetAngle();
-    updateBottleTypeDisplay();
-}
-
-function setupInclinometerListeners() {
-    const fields = ['bottle-wall-angle', 'current-knife-angle', 'current-edge-angle', 'bottle-type', 'bottle-height', 'label-height', 'belly-curvature'];
-    
-    fields.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', function() {
-                if (['bottle-wall-angle', 'current-knife-angle', 'current-edge-angle'].includes(id)) {
-                    checkKnifeAngles();
-                } else {
-                    calculateTargetAngle();
-                    updateBottleTypeDisplay();
-                }
-            });
-            el.addEventListener('change', function() {
-                if (['bottle-wall-angle', 'current-knife-angle', 'current-edge-angle'].includes(id)) {
-                    checkKnifeAngles();
-                }
-            });
-        }
-    });
-}
-
-// ============================================================
-// 14. ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+// 9. ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
 // ============================================================
 
 window.onload = function() {
     runUniversalCalculation();
     switchTab('filling');
-    toggleConeInput();
-    
-    updateBottleTypeDisplay();
-    calculateTargetAngle();
-    setupInclinometerListeners();
+    calculateLabelerFrequencies();
     
     console.log('✅ Delta PLC Mobile Assistant загружен');
 };
