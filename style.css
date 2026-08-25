@@ -322,6 +322,100 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
 .bg-yellow-500 { background-color: #eab308; }
 .bg-red-500 { background-color: #ef4444; }
 
+/* Стили для инструкции инклинометра */
+#knife-instructions .step-item {
+    padding: 8px 10px;
+    background-color: #18181b;
+    border-left: 3px solid #f59e0b;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+#knife-instructions .step-item .step-number {
+    color: #f59e0b;
+    font-weight: 900;
+    font-size: 11px;
+    min-width: 24px;
+}
+
+#knife-instructions .step-item .step-text {
+    color: #d4d4d8;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+#knife-instructions .step-item .step-text strong {
+    color: #fbbf24;
+}
+
+#knife-instructions .step-item .step-text .step-highlight {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+#knife-instructions .step-item.step-done {
+    border-left-color: #22c55e;
+    opacity: 0.7;
+}
+
+#knife-instructions .step-item.step-done .step-number {
+    color: #22c55e;
+}
+
+#knife-instructions .step-item.step-active {
+    border-left-color: #f59e0b;
+    background-color: #1f2937;
+}
+
+#knife-instructions .step-item.step-warning {
+    border-left-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+#knife-instructions .step-item.step-warning .step-number {
+    color: #ef4444;
+}
+
+.knife-section-title {
+    color: #f59e0b;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #27272a;
+}
+
+.knife-section-title:first-child {
+    margin-top: 0;
+}
+
+#knife-recommendation {
+    transition: all 0.3s ease;
+}
+
+#knife-recommendation.show {
+    display: block;
+}
+
+#knife-recommendation.hidden {
+    display: none;
+}
+
+/* Стили для блока скругления */
+#knife-rounding-block {
+    transition: all 0.3s ease;
+}
+
+#knife-rounding-block.hidden {
+    display: none;
+}
+
 /* === СТИЛИ ДЛЯ ЯЧЕЙКИ 2-Й СКОРОСТИ НАСОСА (ВЕРХНИЙ/ДОННЫЙ НАЛИВ) === */
 #val_pump_speed_2 {
     font-size: 11px;
@@ -449,6 +543,18 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
         font-size: 11px;
         width: 70px;
         padding: 2px 3px;
+    }
+    
+    #knife-instructions .step-item {
+        padding: 6px 8px;
+    }
+    
+    #knife-instructions .step-item .step-text {
+        font-size: 11px;
+    }
+    
+    .shiber-warning-title {
+        font-size: 18px;
     }
 }
 
