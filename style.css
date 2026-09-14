@@ -139,7 +139,7 @@ select:focus, input:focus { outline: none; border-color: var(--primary); }
 }
 
 .delta-screen::before {
-    content: "GRASS UNIVERSITY";
+    content: "UNIVERSITY";
     position: absolute;
     top: 50%;
     left: 50%;
